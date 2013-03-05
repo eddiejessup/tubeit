@@ -1,0 +1,9 @@
+*.jar
+*.class
+bin/
+assets/
+gen/
+libs/
+.project
+.settings/
+.classpath
