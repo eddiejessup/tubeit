@@ -1,0 +1,11 @@
+recipe for a tube map:
+- pick ~15 of the outermost vertices of the system (forming termina)
+- connect some of these vertices in ~pairs (forming lines)
+- collapse some inner vertices onto lines to which they lie close (forming junctions)
+- form some inner vertices into ~2 loop lines (forming lines and junctions)
+- branch lines to isolated outer vertices (forming branched termina)
+
+unconsidered:
+- zones
+- rail
+-
