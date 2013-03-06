@@ -1,6 +1,5 @@
 import matplotlib.pyplot as pp
 import numpy as np
-import utils
 
 #def line_to_point(a, b, c, x, y):
 #    return (a * x + b * y + c) / (a ** 2 + b ** 2) ** 0.5
@@ -36,7 +35,7 @@ def make_r(d, n=1, L=1.0, r_sep_min=0):
     for i in range(len(rs)):
         while True:
             r = np.random.uniform(-L / 2.0, L / 2.0, d)
-            if i == 0 or utils.vector_mag_sq(rs[:i] - r).min() > r_sep_min_sq:
+            if i == 0 or np.sum(np.square(rs[:i] - r), axis=-1).min() > r_sep_min_sq:
                 rs[i] = r
                 break
     return rs
@@ -61,7 +60,7 @@ def main():
     for i in range(p):
         inds = pick_inds(rs, l)
         r_sub = rs[inds]
-        pp.plot(r_sub[:, 0], r_sub[:, 1])
+        pp.plot(r_sub[:, 0], r_sub[:, 1], lw=2.5, alpha=0.6)
     pp.axis('equal')
     pp.show()
 
