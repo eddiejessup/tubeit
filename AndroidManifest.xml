@@ -8,10 +8,9 @@
         android:name="com.example.tubeit.permission.MAPS_RECEIVE"
         android:protectionLevel="signature"/>
 	<uses-permission android:name="com.example.tubeit.permission.MAPS_RECEIVE"/>
-
     <uses-sdk
         android:minSdkVersion="8"
-        android:targetSdkVersion="16" />
+        android:targetSdkVersion="17" />
 
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
@@ -40,9 +39,8 @@
             </intent-filter>
         </activity>
         <meta-data
-    	android:name="com.google.android.maps.v2.API_KEY"
-    	android:value="AIzaSyBWtfxXfaUiAZ1WeIYx6ZUb5ozLSyQ-86o"/>
+	    	android:name="com.google.android.maps.v2.API_KEY"
+	    	android:value="AIzaSyBWtfxXfaUiAZ1WeIYx6ZUb5ozLSyQ-86o"/>
         <uses-library android:name="com.google.android.maps" />
-    </application>
-
+        </application>
 </manifest>
