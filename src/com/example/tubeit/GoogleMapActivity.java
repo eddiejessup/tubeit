@@ -38,11 +38,11 @@ public class GoogleMapActivity extends FragmentActivity {
      */
     private GoogleMap mMap;
     private static final LatLng EDINBURGH = new LatLng(55.9500, -3.2200);
-
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.google_map);
+        setContentView(R.layout.activity_google_map);
         setUpMapIfNeeded();
     }
 
