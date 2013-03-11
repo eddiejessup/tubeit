@@ -37,7 +37,7 @@ public class GoogleMapActivity extends FragmentActivity {
      * Note that this may be null if the Google Play services APK is not available.
      */
     private GoogleMap mMap;
-    private static final LatLng EDINBURGH = new LatLng(55.9500, -3.2200);
+    private static final LatLng EDINBURGH = new LatLng(55.9500, -3.1500);
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
