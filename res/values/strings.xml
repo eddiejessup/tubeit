@@ -5,6 +5,7 @@
     <string name="title_activity_input">User Input</string>
     <string name="edit_message">Enter location</string>
     <string name="button_send">Find</string>
+    <string name="button_go_to_map">Go to map</string>
     <string name="title_activity_handle_query">Query Handler</string>
     <string name="hello_world">Hello world!</string>
     <string name="map_not_ready">Map is not ready yet</string>

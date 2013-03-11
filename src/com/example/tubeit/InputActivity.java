@@ -18,7 +18,6 @@ public class InputActivity extends Activity {
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.input, menu);
 		return true;
 	}
@@ -30,6 +29,10 @@ public class InputActivity extends Activity {
     	intent.putExtra(EXTRA_MESSAGE, message);
     	startActivity(intent);
     }
-	
+
+    public void goToMap(View view) {
+    	Intent intent = new Intent(this, GoogleMapActivity.class);
+    	startActivity(intent);
+    }
 	
 }
