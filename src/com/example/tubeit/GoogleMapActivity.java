@@ -8,16 +8,27 @@ import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMap.OnCameraChangeListener;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.UiSettings;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-public class GoogleMapActivity extends FragmentActivity {
+public class GoogleMapActivity extends FragmentActivity implements OnCameraChangeListener {
+	
     private GoogleMap mMap;
     private UiSettings mUiSettings;
+    
     private static final LatLng EDINBURGH = new LatLng(55.9500, -3.1500);
 
+    private LatLng mLangLat;
+    //private CameraPosition mPosition;
+    
+    private float zoom;
+    private double latitude;
+    private double longitude;
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -42,10 +53,13 @@ public class GoogleMapActivity extends FragmentActivity {
 
     private void setUpMap() {
     	mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(EDINBURGH, 11));
-        mMap.addMarker(new MarkerOptions().position(new LatLng(55.9500, -3.2200)).title("Marker"));
+        mMap.addMarker(new MarkerOptions().position(new LatLng(55.9500, -3.1500)).title("Marker"));
 
-        mUiSettings = mMap.getUiSettings();
+        mMap.setOnCameraChangeListener(this);
+        
+        mUiSettings = mMap.getUiSettings();   
     }
+    
 
     /**
      * Checks if the map is ready (which depends on whether the Google Play services APK is
@@ -65,6 +79,20 @@ public class GoogleMapActivity extends FragmentActivity {
         }
         // Enables/disables the zoom controls (+/- buttons in the bottom right of the map).
         mUiSettings.setZoomControlsEnabled(((CheckBox) v).isChecked());
+    }
+    
+    @Override
+    public void onCameraChange(final CameraPosition mPosition) {
+    	
+        mLangLat = mPosition.target;
+        
+        zoom = mPosition.zoom;
+        latitude = mLangLat.latitude;
+        longitude = mLangLat.longitude;
+       
+        System.out.println(zoom);
+        System.out.println(latitude);
+        System.out.println(longitude);
     }
 
 }
