@@ -5,43 +5,45 @@ import matplotlib as mpl
 import matplotlib.font_manager as fm
 import matplotlib.pyplot as pp
 
-prop = fm.FontProperties(fname='London-Tube.ttf', size='small')
+#prop = fm.FontProperties(fname='London-Tube.ttf', size='small')
 
 np.random.seed(115)
 
-line_deets = {
-    'baker': ('Bakerloo', 'brown'),
-    'cent': ('Central', '#fe5806'),
-    'circ': ('Circle', 'yellow'),
-    'dist': ('District', '#00c131'),
-    'elond': ('East London', 'orange'),
-    'ham': ('Hammersmith & City', '#ff9cb6'),
-    'jub': ('Jubilee', 'gray'),
-    'metro': ('Metropolitan', 'purple'),
-    'north': ('Northern', 'black'),
-    'picc': ('Piccadilly', 'blue'),
-}
-
-d = 2
-
 class Network(object):
-    def __init__(self):
+    d = 2
+    line_deets = (('Bakerloo', 'brown'),
+                  ('Central', '#fe5806'),
+                  ('Circle', 'yellow'),
+                  ('District', '#00c131'),
+                  ('East London', 'orange'),
+                  ('Hammersmith & City', '#ff9cb6'),
+                  ('Jubilee', 'gray'),
+                  ('Metropolitan', 'purple'),
+                  ('Northern', 'black'),
+                  ('Piccadilly', 'blue'),
+                  )
+
+    def __init__(self, n_stops):
+        self.n_stops = n_stops
         self.lines = []
 
-    def get_n_verts(self, node):
-        n_verts = 0
-        for line in self.lines:
-            if line.in_line(node): n_verts += 1
-        return n_verts
-
-    def in_network(self, node):
-        return self.get_n_verts(node) > 0
+    def n_verts(self, node):
+        return sum([l.in_line(node) for l in self.lines])
 
     def n_lines(self, node1, node2):
         return sum([l.are_connected(node1, node2) for l in self.lines])
 
+    def in_network(self, node):
+        return self.n_verts(node) > 0
+
+    def is_stop(self, node):
+        return self.n_verts(node) == 1
+
     def is_junction(self, node):
-        return sum([l.in_line(node) for l in self.lines]) > 1
+        return self.n_verts(node) > 1
+
+    def is_terminus(self, node):
+        return max([l.is_terminus(node) for l in self.lines])
 
     def simplify(self):
         for l in self.lines: l.simplify()
@@ -52,6 +54,50 @@ class Network(object):
 
     def jsonable(self):
         return [l.jsonable() for l in self.lines]
+
+    def nodes_to_lines(self, nodes):
+        for line_deet in self.line_deets:
+            line = Line(*line_deet)
+            line.extend(nodes[np.random.randint(len(nodes))])
+            for _ in range(self.n_stops):
+                R = [line.end().get_sep(node) for node in nodes]
+                for i in np.argsort(R):
+                    valid = True
+                    if line.in_line(nodes[i]): valid = False
+                    if self.n_lines(line.end(), nodes[i]) > 1: valid = False
+                    if valid:
+                        line.extend(nodes[i])
+                        break
+            self.add_line(line)
+
+    def plot(self):
+        fig = pp.figure()
+        ax = fig.gca()
+        ax.set_aspect('equal')
+        ax.set_xlim([-0.1, 1.1])
+        ax.set_ylim([-0.1, 1.1])
+
+        pp.grid(True, color='#4ac6ff', linestyle='-')
+        pp.xticks(np.arange(0.0, 1.01, 0.1))
+        pp.yticks(np.arange(0.0, 1.01, 0.1))
+
+        nodes_plot = []
+        for line in self.lines:
+            for node in line.nodes:
+                if node not in nodes_plot:
+                    nodes_plot.append(node)
+                    if self.is_junction(node): c = mpl.patches.Circle(node.r, radius=0.005, fc='white', ec='black', lw=2, zorder=10)
+                    else: c = mpl.patches.Circle(node.r, radius=0.003, fc='black', lw=0, zorder=10)
+                    ax.add_patch(c)
+
+                node_next = line.next(node)
+                if node_next is not node:
+                    r = np.array([node_next.r, node.r])
+                    l = mpl.lines.Line2D(r[:, 0], r[:, 1], color=line.color)
+                    ax.add_line(l)
+
+        pp.show()
+    #    pp.savefig('%s.png' % fname)
 
 class Line(object):
     def __init__(self, label, color):
@@ -71,10 +117,13 @@ class Line(object):
     def in_line(self, node):
         return node in self.nodes
 
+    def is_terminus(self, node):
+        return node in [self.nodes[0], self.nodes[-1]]
+
     def simplify(self):
         for i in range(len(self.nodes) - 1): self.nodes[i].simplify(self.nodes[i + 1])
 
-    def are_connected(n1, n2):
+    def are_connected(self, n1, n2):
         return max([self.nodes[i] in [n1, n2] and self.nodes[i + 1] in [n1, n2] for i in range(len(self.nodes) - 1)])
 
     def next(self, node):
@@ -110,98 +159,35 @@ def ComplexHandler(Obj):
     else:
         raise TypeError('Object of type %s with value of %s is not JSON serializable' % (type(Obj), repr(Obj)))
 
-def make_points(n):
-    r_sep_min = 0.05
-    x_min = 0.0
-    y_min = 0.0
-    x_max = 0.9
-    y_max = 0.6
-    x_mid = (x_min + x_max) / 2.0
-    y_mid = (y_min + y_max) / 2.0
-    x_range = x_max - x_min
-    y_range = y_max - y_min
-
-    rs = np.zeros([n, d])
+def make_points(n, r_sep_min):
+    rs = np.zeros([n, 2])
     for i in range(len(rs)):
         while True:
-            rs[i, 0] = np.random.normal(loc=x_mid, scale=x_range)
-            rs[i, 1] = np.random.normal(loc=y_mid, scale=y_range)
+            rs[i] = np.random.normal(loc=0.5, size=2)
             valid = True
-            if not x_min < rs[i, 0] < x_max: valid = False
-            if not y_min < rs[i, 1] < y_max: valid = False
-            if rs[i, 0] < 0.35 and rs[i, 1] < 0.12: valid = False
+            if not 0.0 < rs[i, 0] < 1.0: valid = False
+            if not 0.0 < rs[i, 1] < 1.0: valid = False
             if i > 0 and np.sqrt(np.sum(np.square(rs[i] - rs[:i]), axis=-1)).min() < r_sep_min: valid = False
             if valid: break
     return rs
 
-def make_nodes(rs):
-    nodes = []
-    for i in range(len(rs)):
-        nodes.append(Node(rs[i]))
-    return nodes
-
-def make_network(nodes, n_stops):
-    network = Network()
-    for line_key in line_deets:
-        line = Line(*line_deets[line_key])
-        line.extend(random.choice(nodes))
-        for _ in range(n_stops):
-            R = [line.end().get_sep(node) for node in nodes]
-            for i in np.argsort(R):
-                valid = True
-                if line.in_line(nodes[i]): valid = False
-                # TODO: if vert.n_lines() >= shared_vert_max: valid = False
-                if valid:
-                    line.extend(nodes[i])
-                    break
-        network.add_line(line)
-    return network
-
-def plot(network):
-    fig = pp.figure()
-    ax = fig.gca()
-    ax.set_aspect('equal')
-    ax.set_xlim([-0.1, 1.0])
-    ax.set_ylim([-0.1, 0.7])
-
-    pp.grid(True, color='#4ac6ff', linestyle='-')
-    pp.xticks(np.arange(0.0, 0.901, 0.1))
-    pp.yticks(np.arange(0.0, 0.601, 0.1))
-
-    nodes_plot = []
-    for line in network.lines:
-        for node in line.nodes:
-            if node not in nodes_plot:
-                nodes_plot.append(node)
-                if network.is_junction(node): c = mpl.patches.Circle(node.r, radius=0.005, fc='white', ec='black', lw=2, zorder=10)
-                else: c = mpl.patches.Circle(node.r, radius=0.003, fc='black', lw=0, zorder=10)
-                ax.add_patch(c)
-
-            node_next = line.next(node)
-            if node_next is not node:
-                r = np.array([node_next.r, node.r])
-                l = mpl.lines.Line2D(r[:, 0], r[:, 1], color=line.color)
-                ax.add_line(l)
-
-    pp.show()
-#    pp.savefig('%s.png' % fname)
-
 def main():
     n_nodes = 100
-    n_stops = 30
+    r_sep_min = 0.05
+    n_stops = 20
 
-    print('Making points')
-    rs = make_points(n_nodes)
+    network = Network(n_stops)
     print('Making nodes')
-    nodes = make_nodes(rs)
+    nodes = [Node(r) for r in make_points(n_nodes, r_sep_min)]
     print('Making network')
-    network = make_network(nodes, n_stops)
+    network.nodes_to_lines(nodes)
     print('Simplifying nodes')
-    network.simplify()
+    for _ in range(1):
+        network.simplify()
     print('Dumping to JSON')
     d = json.dump(network, open('map.json', 'w'), default=ComplexHandler)
     print('Plotting')
-    plot(network)
+    network.plot()
     print('Done')
 
 if __name__ == '__main__': main()
