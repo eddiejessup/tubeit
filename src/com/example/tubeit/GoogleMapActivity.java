@@ -1,5 +1,6 @@
 package com.example.tubeit;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.view.View;
@@ -12,8 +13,9 @@ import com.google.android.gms.maps.GoogleMap.OnCameraChangeListener;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
 
 public class GoogleMapActivity extends FragmentActivity implements OnCameraChangeListener {
 	
@@ -21,7 +23,14 @@ public class GoogleMapActivity extends FragmentActivity implements OnCameraChang
     private UiSettings mUiSettings;
     
     private static final LatLng EDINBURGH = new LatLng(55.9500, -3.1500);
-
+    
+    CircleOptions circleOptions = new CircleOptions()
+        .center(new LatLng(55.9500, -3.1500))
+        .radius(1000) // In meters
+    	.strokeWidth(0.5f)
+    	.strokeColor(Color.BLACK)
+    	.fillColor(Color.RED);
+    
     private LatLng mLangLat;
     //private CameraPosition mPosition;
     
@@ -29,6 +38,7 @@ public class GoogleMapActivity extends FragmentActivity implements OnCameraChang
     private double latitude;
     private double longitude;
     
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -53,11 +63,14 @@ public class GoogleMapActivity extends FragmentActivity implements OnCameraChang
 
     private void setUpMap() {
     	mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(EDINBURGH, 11));
-        mMap.addMarker(new MarkerOptions().position(new LatLng(55.9500, -3.1500)).title("Marker"));
+        //mMap.addMarker(new MarkerOptions().position(new LatLng(55.9500, -3.1500)).title("Marker"));
 
         mMap.setOnCameraChangeListener(this);
         
         mUiSettings = mMap.getUiSettings();   
+        
+        // Get back the mutable Circle
+        Circle circle = mMap.addCircle(circleOptions);
     }
     
 
