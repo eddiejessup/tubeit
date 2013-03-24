@@ -22,6 +22,8 @@ line_deets = {
     'picc': ('Piccadilly', 'blue'),
 }
 
+d = 2
+
 class Network(object):
     def __init__(self):
         self.lines = []
@@ -41,10 +43,8 @@ class Network(object):
     def is_junction(self, node):
         return sum([l.in_line(node) for l in self.lines]) > 1
 
-    def simplify(self, n=10):
-        for _ in range(n):
-            for line in self.lines:
-                line.simplify()
+    def simplify(self):
+        for l in self.lines: l.simplify()
 
     def add_line(self, line):
         if line not in self.lines: self.lines.append(line)
@@ -72,8 +72,7 @@ class Line(object):
         return node in self.nodes
 
     def simplify(self):
-        for i in range(len(self.nodes) - 1):
-            self.nodes[i].simplify(self.nodes[i + 1])
+        for i in range(len(self.nodes) - 1): self.nodes[i].simplify(self.nodes[i + 1])
 
     def are_connected(n1, n2):
         return max([self.nodes[i] in [n1, n2] and self.nodes[i + 1] in [n1, n2] for i in range(len(self.nodes) - 1)])
@@ -85,27 +84,25 @@ class Line(object):
         raise Exception
 
     def jsonable(self):
-        return {'label': self.label,
-                'nodes': [n.jsonable() for n in self.nodes]}
+        return {'label': self.label, 'nodes': [n.jsonable() for n in self.nodes]}
 
 class Node(object):
+    thetas = np.linspace(-np.pi, np.pi, 9)
+
     def __init__(self, r, label=''):
         self.r = r
         self.label = label
 
     def get_sep(self, node):
-        return np.sqrt(np.sum(np.square(self.r - node.r)))
+        return np.sqrt(np.sum(np.square(node.r - self.r)))
 
     def simplify(self, node):
-        thetas = np.linspace(-np.pi, np.pi, 9)
         v = node.r - self.r
-        theta = np.arctan2(v[1], v[0])
-        theta_s = thetas[np.abs(thetas - theta).argmin()]
+        theta_s = self.thetas[np.abs(self.thetas - np.arctan2(v[1], v[0])).argmin()]
         node.r = self.r + np.array([np.cos(theta_s), np.sin(theta_s)]) * np.sqrt(np.sum(np.square(v)))
 
     def jsonable(self):
-        return {'label': self.label,
-                'r': [self.r[0], self.r[1]]}
+        return {'label': self.label, 'r': [self.r[0], self.r[1]]}
 
 def ComplexHandler(Obj):
     if hasattr(Obj, 'jsonable'):
@@ -113,8 +110,18 @@ def ComplexHandler(Obj):
     else:
         raise TypeError('Object of type %s with value of %s is not JSON serializable' % (type(Obj), repr(Obj)))
 
-def make_points():
-    rs = np.zeros([n_nodes, d])
+def make_points(n):
+    r_sep_min = 0.05
+    x_min = 0.0
+    y_min = 0.0
+    x_max = 0.9
+    y_max = 0.6
+    x_mid = (x_min + x_max) / 2.0
+    y_mid = (y_min + y_max) / 2.0
+    x_range = x_max - x_min
+    y_range = y_max - y_min
+
+    rs = np.zeros([n, d])
     for i in range(len(rs)):
         while True:
             rs[i, 0] = np.random.normal(loc=x_mid, scale=x_range)
@@ -133,7 +140,7 @@ def make_nodes(rs):
         nodes.append(Node(rs[i]))
     return nodes
 
-def make_network(nodes):
+def make_network(nodes, n_stops):
     network = Network()
     for line_key in line_deets:
         line = Line(*line_deets[line_key])
@@ -150,12 +157,12 @@ def make_network(nodes):
         network.add_line(line)
     return network
 
-def plot(network, fname='out'):
+def plot(network):
     fig = pp.figure()
     ax = fig.gca()
     ax.set_aspect('equal')
-    ax.set_xlim([-x_buff, x_max+x_buff])
-    ax.set_ylim([-y_buff, y_max+y_buff])
+    ax.set_xlim([-0.1, 1.0])
+    ax.set_ylim([-0.1, 0.7])
 
     pp.grid(True, color='#4ac6ff', linestyle='-')
     pp.xticks(np.arange(0.0, 0.901, 0.1))
@@ -176,37 +183,25 @@ def plot(network, fname='out'):
                 l = mpl.lines.Line2D(r[:, 0], r[:, 1], color=line.color)
                 ax.add_line(l)
 
-#    pp.show()
-    pp.savefig('%s.png' % fname)
+    pp.show()
+#    pp.savefig('%s.png' % fname)
 
-# Point generation
-r_sep_min = 0.05
-x_min = 0.0
-y_min = 0.0
-x_max = 0.9
-y_max = 0.6
-x_mid = (x_min + x_max) / 2.0
-y_mid = (y_min + y_max) / 2.0
-x_range = x_max - x_min
-y_range = y_max - y_min
-x_buff = x_range / 20.0
-y_buff = y_range / 20.0
+def main():
+    n_nodes = 100
+    n_stops = 30
 
-# Map generation
-d = 2
-n_nodes = 100
-n_lines = 10
-n_stops = 30
+    print('Making points')
+    rs = make_points(n_nodes)
+    print('Making nodes')
+    nodes = make_nodes(rs)
+    print('Making network')
+    network = make_network(nodes, n_stops)
+    print('Simplifying nodes')
+    network.simplify()
+    print('Dumping to JSON')
+    d = json.dump(network, open('map.json', 'w'), default=ComplexHandler)
+    print('Plotting')
+    plot(network)
+    print('Done')
 
-print('Making points')
-rs = make_points()
-print('Making nodes')
-nodes = make_nodes(rs)
-print('Making network')
-network = make_network(nodes)
-d = json.dumps(network, default=ComplexHandler)
-print(d)
-#print('Plotting')
-#for i in range(10):
-#    plot(network, i)
-#    network.simplify(1)
+if __name__ == '__main__': main()
