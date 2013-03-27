@@ -7,3 +7,4 @@ libs/
 .project
 .settings/
 .classpath
+*.png

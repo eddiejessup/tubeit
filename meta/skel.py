@@ -1,4 +1,3 @@
-import random
 import json
 import numpy as np
 import matplotlib as mpl
@@ -7,70 +6,120 @@ import matplotlib.pyplot as pp
 
 #prop = fm.FontProperties(fname='London-Tube.ttf', size='small')
 
-np.random.seed(115)
+np.random.seed(116)
+
+def dedupe(a):
+    b = []
+    for e in a: 
+        if e not in b: b.append(e)
+    return b
 
 class Network(object):
     d = 2
-    line_deets = (('Bakerloo', 'brown'),
+    path_deets = (('Bakerloo', 'brown'),
                   ('Central', '#fe5806'),
                   ('Circle', 'yellow'),
                   ('District', '#00c131'),
                   ('East London', 'orange'),
                   ('Hammersmith & City', '#ff9cb6'),
-                  ('Jubilee', 'gray'),
+                  ('Jubilee', '#8aa2af'),
                   ('Metropolitan', 'purple'),
-                  ('Northern', 'black'),
+                  ('Northern', '#4c554d'),
                   ('Piccadilly', 'blue'),
                   )
 
-    def __init__(self, n_stops):
+    def __init__(self, nodes, n_stops):
+        self.nodes = nodes
         self.n_stops = n_stops
-        self.lines = []
+        self.paths = []
 
-    def n_verts(self, node):
-        return sum([l.in_line(node) for l in self.lines])
+        def node_valid(path, node):
+            # Stop paths passing through themselves
+            if path.node_in_path(node): return False
+            # Restrict number of neighbours (distinct nodes from which node can be reached)
+            if len(self.neighbs(node)) > 3: return False
+            # Restrict number of redundant vertices (distinct paths to get to node from current node)
+            if len(self.get_paths_vert(Vertex(path.end(), node))) > 1: return False
+            # Restrict number of redundant nodes (distinct paths to arrive at node from any node)
+            if len(self.get_paths_node(node)) > 3: return False
+            # Leave termina as they are
+            if len(self.neighbs(node)) == 1: return False
+            return True
 
-    def n_lines(self, node1, node2):
-        return sum([l.are_connected(node1, node2) for l in self.lines])
+        def make_node_list(path):
+            if path.end() is None: 
+                nodes_sort = []
+                for node in self.nodes:
+                    if not self.in_network(node): nodes_sort.append(node)
+                np.random.shuffle(nodes_sort)
+            else: 
+                inds = np.argsort([path.end().get_sep(node) for node in self.nodes])
+                nodes_sort = [self.nodes[i] for i in inds]
+            return nodes_sort
+
+        i_path = 0
+        while True:
+            try:
+                path = Path(*self.path_deets[i_path])
+            except IndexError:
+                path = Path('shink', 'black')
+
+            while True:
+                for node in make_node_list(path):
+                    if node_valid(path, node):
+                        path.extend(node)
+                        break
+                if len(path.nodes) > self.n_stops:# and self.is_terminus(path.end()):
+                    break
+
+            self.paths.append(path)
+            if len(self.nodes_in_network()) == len(self.nodes):
+                break
+            i_path += 1
 
     def in_network(self, node):
-        return self.n_verts(node) > 0
+        return node in self.nodes_in_network()
 
-    def is_stop(self, node):
-        return self.n_verts(node) == 1
-
-    def is_junction(self, node):
-        return self.n_verts(node) > 1
+    def is_connected(self, node):
+        return len(self.neighbs(node)) > 0
 
     def is_terminus(self, node):
-        return max([l.is_terminus(node) for l in self.lines])
+        return len(self.neighbs(node)) == 1
+
+    def is_stop(self, node):
+        return len(self.neighbs(node)) == 2
+
+    def is_junction(self, node):
+        return len(self.neighbs(node)) > 2
+
+    def nodes_in_network(self):
+        ns = []
+        for p in self.paths: ns += p.nodes
+        return dedupe(ns)
+
+    def neighbs(self, node):
+        neighbs = []
+        for p in self.paths:
+            if p.node_in_path(node):
+                neighbs += p.neighbs(node)
+        return dedupe(neighbs)
+
+    def get_paths_node(self, n):
+        ps = []
+        for p in self.paths:
+            if p.node_in_path(n): ps.append(p)
+        return ps
+
+    def get_paths_vert(self, v):
+        ps = []
+        for p in self.paths:
+            if p.vert_in_path(v): ps.append(p)
+        return ps
 
     def simplify(self):
-        for l in self.lines: l.simplify()
+        for p in np.random.permutation(self.paths): p.simplify()
 
-    def add_line(self, line):
-        if line not in self.lines: self.lines.append(line)
-        else: raise Exception
-
-    def jsonable(self):
-        return [l.jsonable() for l in self.lines]
-
-    def nodes_to_lines(self, nodes):
-        for line_deet in self.line_deets:
-            line = Line(*line_deet)
-            line.extend(nodes[np.random.randint(len(nodes))])
-            for _ in range(self.n_stops):
-                R = [line.end().get_sep(node) for node in nodes]
-                for i in np.argsort(R):
-                    valid = True
-                    if line.in_line(nodes[i]): valid = False
-                    if self.n_lines(line.end(), nodes[i]) > 1: valid = False
-                    if valid:
-                        line.extend(nodes[i])
-                        break
-            self.add_line(line)
-
-    def plot(self):
+    def plot(self, fname=None):
         fig = pp.figure()
         ax = fig.gca()
         ax.set_aspect('equal')
@@ -81,25 +130,43 @@ class Network(object):
         pp.xticks(np.arange(0.0, 1.01, 0.1))
         pp.yticks(np.arange(0.0, 1.01, 0.1))
 
-        nodes_plot = []
-        for line in self.lines:
-            for node in line.nodes:
-                if node not in nodes_plot:
-                    nodes_plot.append(node)
-                    if self.is_junction(node): c = mpl.patches.Circle(node.r, radius=0.005, fc='white', ec='black', lw=2, zorder=10)
-                    else: c = mpl.patches.Circle(node.r, radius=0.003, fc='black', lw=0, zorder=10)
-                    ax.add_patch(c)
+        for node in self.nodes:
+            if self.is_junction(node): 
+                c = mpl.patches.Circle(node.r, radius=0.005, fc='white', ec='black', lw=2, zorder=10)
+            else:
+                ps = self.get_paths_node(node)
+                if self.is_stop(node):
+                    if len(ps) > 1:
+                        c = mpl.patches.Circle(node.r, radius=0.0075, fc='black', lw=0, zorder=10)
+                    else:
+                        c = mpl.patches.Circle(node.r, radius=0.0075, fc=ps[0].color, lw=0, zorder=10)
+                elif self.is_terminus(node):
+                    assert len(ps) == 1
+                    c = mpl.patches.Circle(node.r, radius=0.015, fc=ps[0].color, lw=0, zorder=10)
+                else: 
+                    raise Exception
+            ax.add_patch(c)
 
-                node_next = line.next(node)
-                if node_next is not node:
-                    r = np.array([node_next.r, node.r])
-                    l = mpl.lines.Line2D(r[:, 0], r[:, 1], color=line.color)
-                    ax.add_line(l)
+        def n_paths_vert_so_far(v):
+            return sum([v.equiv(v1) for v1 in verts_used])
 
-        pp.show()
-    #    pp.savefig('%s.png' % fname)
+        verts_used = []
+        for p in self.paths:
+            for i in range(len(p.nodes) - 1):
+                v = Vertex(p.nodes[i], p.nodes[i + 1])
+                r = v.r_offset(0.007 * n_paths_vert_so_far(v))
+                verts_used.append(v)
+                l = mpl.lines.Line2D(r[:, 0], r[:, 1], color=p.color, lw=3)
+                ax.add_line(l)
 
-class Line(object):
+        if fname is None: pp.show()
+        else: pp.savefig('%s.png' % fname)
+        pp.cla()
+
+    def jsonable(self):
+        return [p.jsonable() for p in self.paths]
+
+class Path(object):
     def __init__(self, label, color):
         self.label = label
         self.color = color
@@ -109,35 +176,59 @@ class Line(object):
         self.nodes.append(node)
 
     def end(self):
-        return self.nodes[-1]
+        if len(self.nodes) > 0: return self.nodes[-1]
+        else: return None
 
     def start(self):
-        return self.lines[0]
+        if len(self.nodes) > 0: return self.nodes[0]
+        else: return None
 
-    def in_line(self, node):
+    def vert_in_path(self, v):
+        return max([v.equiv(v1) for v1 in self.to_verts()])
+
+    def node_in_path(self, node):
         return node in self.nodes
 
     def is_terminus(self, node):
         return node in [self.nodes[0], self.nodes[-1]]
 
-    def simplify(self):
-        for i in range(len(self.nodes) - 1): self.nodes[i].simplify(self.nodes[i + 1])
+    def to_verts(self, direction=1):
+        vs = []
+        if direction == 1:
+            for i in range(len(self.nodes) - 1):
+                vs.append(Vertex(self.nodes[i], self.nodes[i + 1]))
+        elif direction == -1:
+            for i in range(len(self.nodes) - 1, -1, -1):
+                vs.append(Vertex(self.nodes[i], self.nodes[i - 1]))
+        else:
+            raise Exception
+        return vs
 
-    def are_connected(self, n1, n2):
-        return max([self.nodes[i] in [n1, n2] and self.nodes[i + 1] in [n1, n2] for i in range(len(self.nodes) - 1)])
+    def neighbs(self, node):
+        return [n for n in [self.next(node), self.prev(node)] if n is not None]
+
+    def node_to_i(self, node):
+        for i in range(len(self.nodes)):
+            if self.nodes[i] is node: return i
+        raise Exception
 
     def next(self, node):
-        for i in range(len(self.nodes) - 1):
-            if self.nodes[i] is node: return self.nodes[i + 1]
-        if self.nodes[-1] is node: return node
-        raise Exception
+        i = self.node_to_i(node)
+        if i < len(self.nodes) - 1: return self.nodes[i + 1]
+        else: return None
+
+    def prev(self, node):
+        i = self.node_to_i(node)
+        if i > 0: return self.nodes[i - 1]
+        else: return None
+
+    def simplify(self):
+        for v in self.to_verts(direction=2*np.random.randint(2) - 1): v.simplify()
 
     def jsonable(self):
         return {'label': self.label, 'nodes': [n.jsonable() for n in self.nodes]}
 
 class Node(object):
-    thetas = np.linspace(-np.pi, np.pi, 9)
-
     def __init__(self, r, label=''):
         self.r = r
         self.label = label
@@ -145,13 +236,46 @@ class Node(object):
     def get_sep(self, node):
         return np.sqrt(np.sum(np.square(node.r - self.r)))
 
-    def simplify(self, node):
-        v = node.r - self.r
-        theta_s = self.thetas[np.abs(self.thetas - np.arctan2(v[1], v[0])).argmin()]
-        node.r = self.r + np.array([np.cos(theta_s), np.sin(theta_s)]) * np.sqrt(np.sum(np.square(v)))
-
     def jsonable(self):
         return {'label': self.label, 'r': [self.r[0], self.r[1]]}
+
+class Vertex(object):
+    thetas = np.linspace(-np.pi, np.pi, 9)
+
+    def __init__(self, node1, node2):
+        self.node1 = node1
+        self.node2 = node2
+    
+    def nodes(self):
+        return (self.node1, self.node2)
+    
+    def v(self):
+        return self.node2.r - self.node1.r
+
+    def u(self):
+        v = self.v()
+        return v / np.sqrt(np.sum(np.square(v)))
+
+    def u_perp(self):
+        u = self.u()
+        return np.array([u[1], -u[0]])
+
+    def offset(self, d):
+        return d * self.u_perp()
+
+    def r(self):
+        return np.array([self.node1.r, self.node2.r])
+
+    def r_offset(self, d):
+        return self.r() + self.offset(d)
+
+    def equiv(self, v):
+        return v.node1 in self.nodes() and v.node2 in self.nodes()
+
+    def simplify(self):
+        v = self.v()
+        theta_s = self.thetas[np.abs(self.thetas - np.arctan2(v[1], v[0])).argmin()]
+        self.node2.r = self.node1.r + np.array([np.cos(theta_s), np.sin(theta_s)]) * np.sqrt(np.sum(np.square(v)))
 
 def ComplexHandler(Obj):
     if hasattr(Obj, 'jsonable'):
@@ -163,7 +287,7 @@ def make_points(n, r_sep_min):
     rs = np.zeros([n, 2])
     for i in range(len(rs)):
         while True:
-            rs[i] = np.random.normal(loc=0.5, size=2)
+            rs[i] = np.random.uniform(0.0, 1.0, size=2)
             valid = True
             if not 0.0 < rs[i, 0] < 1.0: valid = False
             if not 0.0 < rs[i, 1] < 1.0: valid = False
@@ -172,17 +296,17 @@ def make_points(n, r_sep_min):
     return rs
 
 def main():
-    n_nodes = 100
+    n_nodes = 200
     r_sep_min = 0.05
-    n_stops = 20
+    n_stops = 15
 
-    network = Network(n_stops)
     print('Making nodes')
     nodes = [Node(r) for r in make_points(n_nodes, r_sep_min)]
     print('Making network')
-    network.nodes_to_lines(nodes)
+    network = Network(nodes, n_stops)
     print('Simplifying nodes')
-    for _ in range(1):
+    for _ in range(50):
+#        network.plot(fname=_)
         network.simplify()
     print('Dumping to JSON')
     d = json.dump(network, open('map.json', 'w'), default=ComplexHandler)
