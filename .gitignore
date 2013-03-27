@@ -1,3 +1,5 @@
+*.pyc
+*.*~
 *.jar
 *.class
 bin/
@@ -8,3 +10,4 @@ libs/
 .settings/
 .classpath
 *.png
+Tubego/static/

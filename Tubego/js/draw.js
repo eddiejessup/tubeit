@@ -57,7 +57,7 @@
 
   svg = d3.select("#tube-map").append("svg").attr("width", svg_width).attr("height", svg_height);
 
-  d3.json("http://localhost:8000/map.json", function(jsondata) {
+  d3.json("http://localhost:8000/static/points.json", function(jsondata) {
     var allData, i, line, value, _i, _len;
 
     for (i in jsondata) {
