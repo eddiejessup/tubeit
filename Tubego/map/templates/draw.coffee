@@ -16,7 +16,7 @@ _mergeData = (lines) ->
 	final_array = []
 	for line in lines
 		Array::push.apply final_array, line
-	
+
 	return final_array
 
 # draw the circles from the line data onto the SVG
@@ -43,12 +43,12 @@ _drawCircles  = (lineData, SVG) ->
 		.style('font-family', 'sans-serif')
 		.style('font-size', 25)
 		.style('fill' , 'gray')
-	
+
 	textAttributes = text
 	    .attr("x",  (d) -> (d.r[0] * svg_width + offset))
 	    .attr("y",  (d) -> (d.r[1] * svg_height+ offset))
 		.text((d) -> (d.text))
-	
+
 
 
 # the draw line function on the the SVG with a given colour
@@ -66,7 +66,7 @@ _drawLine = (lineData, colour, SVG) ->
 		.attr("fill", "none")
 	    .attr("fill", "none")
 		.attr('opacity', '0.9')
-		
+
 	totalLength = lineGraph.node().getTotalLength()
 
 	lineGraph
@@ -81,10 +81,10 @@ svg = d3.select("#tube-map")
 		.append("svg")
 		.attr("width", svg_width)
 		.attr("height", svg_height)
-		
-# make a json call to the map.json file stored in this directory
-d3.json "http://localhost:8000/map.json", (jsondata) ->
-	
+
+# make a json call to the map.jason file stored in this directory
+d3.json "http://localhost:8000/points.json", (jsondata) ->
+
 	# loop though the values in the json data
 	for i, value of jsondata
 		lines[i] = value.nodes
@@ -95,7 +95,7 @@ d3.json "http://localhost:8000/map.json", (jsondata) ->
 		# everything from here needs to be indented to make sure it falls within the
 		# d3.json call
 
-	# run the draw line function	
+	# run the draw line function
 	_drawLine(line, colours[i], svg) for line, i in lines
 	# run the draw circle function
 	allData = _mergeData(lines)

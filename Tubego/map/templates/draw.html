@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block scripts %}<script src="http://d3js.org/d3.v3.min.js"></script>{% endblock %}
+
+{% block content %}
+        <div id="tube-map" style="width: 500px; height: 500px"></div>
+        <script src="{{ STATIC_URL }}draw.js"></script>
+{% endblock %}
