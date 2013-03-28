@@ -4,4 +4,9 @@
 {% block content %}
         <div id="tube-map" style="width: 500px; height: 500px"></div>
         <script src="{{ STATIC_URL }}draw.js"></script>
+        <script type="text/javascript">
+            var network = {{ network|safe }};
+            main(network);
+        </script>
+
 {% endblock %}

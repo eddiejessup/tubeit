@@ -21,7 +21,7 @@ class Network(object):
                   ('Circle', 'yellow'),
                   ('District', '#00c131'),
                   ('East London', 'orange'),
-                  ('Hammersmith & City', '#ff9cb6'),
+                  ('Hammersmith and City', '#ff9cb6'),
                   ('Jubilee', '#8aa2af'),
                   ('Metropolitan', 'purple'),
                   ('Northern', '#4c554d'),
@@ -277,13 +277,16 @@ class Vertex(object):
         theta_s = self.thetas[np.abs(self.thetas - np.arctan2(v[1], v[0])).argmin()]
         self.node2.r = self.node1.r + np.array([np.cos(theta_s), np.sin(theta_s)]) * np.sqrt(np.sum(np.square(v)))
 
-def ComplexHandler(Obj):
+def JSONHandler(Obj):
     if hasattr(Obj, 'jsonable'):
         return Obj.jsonable()
     else:
         raise TypeError('Object of type %s with value of %s is not JSON serializable' % (type(Obj), repr(Obj)))
 
 def make_points(n, r_sep_min):
+    n_nodes = 200
+    r_sep_min = 0.05
+
     rs = np.zeros([n, 2])
     for i in range(len(rs)):
         while True:
@@ -295,23 +298,53 @@ def make_points(n, r_sep_min):
             if valid: break
     return rs
 
-def main():
-    n_nodes = 200
-    r_sep_min = 0.05
-    n_stops = 15
+n_stops = 15
 
-    print('Making nodes')
-    nodes = [Node(r) for r in make_points(n_nodes, r_sep_min)]
-    print('Making network')
-    network = Network(nodes, n_stops)
-    print('Simplifying nodes')
-    for _ in range(50):
-#        network.plot(fname=_)
-        network.simplify()
+def main():
+    rs = make_points(n_nodes, r_sep_min)
+    network = points_to_network(rs)
     print('Dumping to JSON')
     d = json.dump(network, open('map.json', 'w'), default=ComplexHandler)
     print('Plotting')
     network.plot()
-    print('Done')
+    print('Done')    
 
-if __name__ == '__main__': main()
+def points_to_network(rs):
+    try:
+        rs[0] - rs[1]
+    except TypeError:
+        rs = np.array(rs)
+    print('Making nodes')
+    nodes = [Node(r) for r in rs]
+    print('Making network')
+    network = Network(nodes, n_stops)
+    print('Simplifying nodes')
+#    for _ in range(50):
+##        network.plot(fname=_)
+#        network.simplify()
+    return network
+
+def normalise_points(points):
+    pn = np.array(points)
+    pn -= pn.min(axis=0)
+    pn /= pn.max(axis=0)
+    return pn
+
+def places_to_points(places):
+    points = []
+    for place in places:
+        loc = place['geometry']['location']
+        points.append([loc['lat'], loc['lng']])
+    return normalise_points(points)
+
+def query_to_network(query, r):
+    import place_search
+    places = place_search.text_to_nearby(query)
+    points = places_to_points(places)
+    points = normalise_points(points)
+    net = points_to_network(points)
+    net.plot()
+
+if __name__ == '__main__': 
+#    main()
+    query_to_network('whalley', 1000)
