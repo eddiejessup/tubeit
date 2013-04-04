@@ -3,11 +3,11 @@
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
-ADMINS = (('Elliot Marsden', 'elliot.marsden@gmail.com'),)
+ADMINS = (('Elliot Marsden', 'elliot.marsden@gmail.com'), ('Fergus Cullen', 'fergus.cullen89@gmail.com'))
 
 MANAGERS = ADMINS
 
-PROJECT_DIR = '/home/ejm/tubeit/Tubego/'
+PROJECT_DIR = '/Users/fcullen/EclipseProjects/tubeit/Tubego'
 
 DATABASES = {
     'default': {
