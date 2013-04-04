@@ -1,20 +1,19 @@
 from __future__ import print_function
-import http
 import urllib
 import json
+import httplib
 
 class Searcher(object):
     def __init__(self):
         self.get_path_base()
-        self.conn = http.client.HTTPSConnection(self.HOST)
+        self.conn = httplib.HTTPSConnection(self.HOST)
 
     def get_path_base(self):
-        self.path_base = '/%s?%s' % (self.API_PATH, urllib.parse.urlencode(self.args_base))
+        self.path_base = '/%s?%s' % (self.API_PATH, urllib.urlencode(self.args_base))
 
     def get_response(self, args):
-        request_path = '%s&%s' % (self.path_base, urllib.parse.urlencode(args))
+        request_path = '%s&%s' % (self.path_base, urllib.urlencode(args))
         self.conn.request('GET', request_path)
-        print(request_path)
         response = self.conn.getresponse()
         encoding = response.headers.get_content_charset()
         body = response.read().decode(encoding)
@@ -34,7 +33,7 @@ class PlacesSearcher(Searcher):
 
     def __init__(self, *args, **kwargs):
         self.API_PATH = '%s/%s/%s' % (self.API_PATH_BASE, self.API_NAME, self.API_OUTPUT)
-        super().__init__(*args, **kwargs)
+        super(PlacesSearcher, self).__init__(*args, **kwargs)
 
 class AutocompleteSearcher(PlacesSearcher):
     API_NAME = 'autocomplete'
