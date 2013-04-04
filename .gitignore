@@ -9,4 +9,5 @@ libs/
 .project
 .settings/
 .classpath
+*.png
 Tubego/static/

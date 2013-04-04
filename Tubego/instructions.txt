@@ -1,0 +1,10 @@
+To try it out:
+	- Install django
+	- Run "python manage.py runserver" in the directory where manage.py lives, it is believed to be in Tubego
+	- Browse your internets to localhost:8000/map/search
+	- Enter a map search query (e.g. Paris if you're feeling romantic/have no imagination) and a radius in metres (e.g. 100, other integers are available) within which to scrape locations
+	- Await magic
+	- Be disappointed
+
+Notes:
+	- One of the more forward-thinking authors of this code has migrated to python 3, print statements may be considered harmful, i.e. print() is a fucking function.

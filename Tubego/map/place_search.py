@@ -15,8 +15,10 @@ class Searcher(object):
         request_path = '%s&%s' % (self.path_base, urllib.urlencode(args))
         self.conn.request('GET', request_path)
         response = self.conn.getresponse()
-        encoding = response.headers.get_content_charset()
-        body = response.read().decode(encoding)
+#        print(dir(response.getheaders()))
+#        encoding = response.headers.get_content_charset()
+        body = response.read()
+        print(body)
         results = json.loads(body)
         return results
 
@@ -49,7 +51,6 @@ class AutocompleteSearcher(PlacesSearcher):
             'input': query,
         }
         results = self.get_response(args)
-#        self.display_results(results)
         return results
 
 class DetailSearcher(PlacesSearcher):
@@ -65,7 +66,6 @@ class DetailSearcher(PlacesSearcher):
             'reference': query,
         }
         results = self.get_response(args)
-#        self.display_results(results)
         return results
 
 class NearbySearcher(PlacesSearcher):
@@ -81,7 +81,6 @@ class NearbySearcher(PlacesSearcher):
             'radius': rad,
         }
         results = self.get_response(args)
-#        self.display_results(results)
         return results
 
 class TextSearcher(PlacesSearcher):
@@ -96,7 +95,6 @@ class TextSearcher(PlacesSearcher):
             'query': query,
         }
         results = self.get_response(args)
-#        self.display_results(results)
         return results
 
 def location(r):
