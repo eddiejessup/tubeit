@@ -1,5 +1,7 @@
 # Django settings for Tubego project.
 
+import socket
+
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
@@ -7,11 +9,13 @@ ADMINS = (('Elliot Marsden', 'elliot.marsden@gmail.com'), ('Fergus Cullen', 'fer
 
 MANAGERS = ADMINS
 
-is_elliot = True
-if is_elliot:
+if socket.gethostname() == 'elap':
     PROJECT_DIR = '/home/ejm/tubeit/Tubego/'
-else:
+elif socket.gethostname() == 'fergus hostname':
     PROJECT_DIR = '/Users/fcullen/EclipseProjects/tubeit/Tubego/'
+else:
+    PROJECT_DIR = raw_input('I do not know you, enter the path to Tubego: ')
+if PROJECT_DIR[-1] != '/': PROJECT_DIR += '/'
 
 DATABASES = {
     'default': {
