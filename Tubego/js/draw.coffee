@@ -49,8 +49,6 @@ _drawCircles  = (lineData, SVG) ->
 	    .attr("y",  (d) -> (d.r[1] * svg_height+ offset))
 		.text((d) -> (d.text))
 
-
-
 # the draw line function on the the SVG with a given colour
 _drawLine = (lineData, colour, SVG) ->
 
@@ -77,20 +75,17 @@ _drawLine = (lineData, colour, SVG) ->
 	    .ease("linear")
 	    .attr("stroke-dashoffset", 0)
 
-svg = d3.select("#tube-map")
-		.append("svg")
-		.attr("width", svg_width)
-		.attr("height", svg_height)
+main = (jsondata) ->
 
-# make a json call to the map.jason file stored in this directory
-d3.json "http://localhost:8000/points.json", (jsondata) ->
+	svg = d3.select("#tube-map")
+			.append("svg")
+			.attr("width", svg_width)
+			.attr("height", svg_height)
 
 	# loop though the values in the json data
 	for i, value of jsondata
 		lines[i] = value.nodes
-
 		console.log(lines[i])
-		console.log(colours)
 
 		# everything from here needs to be indented to make sure it falls within the
 		# d3.json call

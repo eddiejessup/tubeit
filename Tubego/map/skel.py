@@ -10,7 +10,7 @@ np.random.seed(116)
 
 def dedupe(a):
     b = []
-    for e in a: 
+    for e in a:
         if e not in b: b.append(e)
     return b
 
@@ -47,12 +47,12 @@ class Network(object):
             return True
 
         def make_node_list(path):
-            if path.end() is None: 
+            if path.end() is None:
                 nodes_sort = []
                 for node in self.nodes:
                     if not self.in_network(node): nodes_sort.append(node)
                 np.random.shuffle(nodes_sort)
-            else: 
+            else:
                 inds = np.argsort([path.end().get_sep(node) for node in self.nodes])
                 nodes_sort = [self.nodes[i] for i in inds]
             return nodes_sort
@@ -131,7 +131,7 @@ class Network(object):
         pp.yticks(np.arange(0.0, 1.01, 0.1))
 
         for node in self.nodes:
-            if self.is_junction(node): 
+            if self.is_junction(node):
                 c = mpl.patches.Circle(node.r, radius=0.005, fc='white', ec='black', lw=2, zorder=10)
             else:
                 ps = self.get_paths_node(node)
@@ -143,7 +143,7 @@ class Network(object):
                 elif self.is_terminus(node):
                     assert len(ps) == 1
                     c = mpl.patches.Circle(node.r, radius=0.015, fc=ps[0].color, lw=0, zorder=10)
-                else: 
+                else:
                     raise Exception
             ax.add_patch(c)
 
@@ -245,10 +245,10 @@ class Vertex(object):
     def __init__(self, node1, node2):
         self.node1 = node1
         self.node2 = node2
-    
+
     def nodes(self):
         return (self.node1, self.node2)
-    
+
     def v(self):
         return self.node2.r - self.node1.r
 
@@ -300,51 +300,30 @@ def make_points(n, r_sep_min):
 
 n_stops = 15
 
-def main():
-    rs = make_points(n_nodes, r_sep_min)
-    network = points_to_network(rs)
-    print('Dumping to JSON')
-    d = json.dump(network, open('map.json', 'w'), default=ComplexHandler)
-    print('Plotting')
-    network.plot()
-    print('Done')    
+def points_to_nodes(rs, labels):
+    rs -= np.min(rs, axis=0)
+    rs /= np.max(rs, axis=0)
 
-def points_to_network(rs):
-    try:
-        rs[0] - rs[1]
-    except TypeError:
-        rs = np.array(rs)
-    print('Making nodes')
-    nodes = [Node(r) for r in rs]
-    print('Making network')
-    network = Network(nodes, n_stops)
-    print('Simplifying nodes')
-#    for _ in range(50):
-##        network.plot(fname=_)
-#        network.simplify()
-    return network
-
-def normalise_points(points):
-    pn = np.array(points)
-    pn -= pn.min(axis=0)
-    pn /= pn.max(axis=0)
-    return pn
+    nodes = []
+    for i in range(len(rs)):
+        nodes.append(Node(rs[i], labels[i]))
+    return nodes
 
 def places_to_points(places):
-    points = []
-    for place in places:
+    rs = np.zeros([len(places), 2], dtype=np.float)
+    labels = []
+    for i in range(len(places)):
+        place = places[i]
         loc = place['geometry']['location']
-        points.append([loc['lat'], loc['lng']])
-    return normalise_points(points)
+        rs[i, :] = [loc['lat'], loc['lng']]
+        labels.append(place['name'])
+    return rs, labels
 
 def query_to_network(query, r):
     import place_search
-    places = place_search.text_to_nearby(query)
-    points = places_to_points(places)
-    points = normalise_points(points)
-    net = points_to_network(points)
-    net.plot()
-
-if __name__ == '__main__': 
-#    main()
-    query_to_network('whalley', 1000)
+    places = place_search.text_to_nearby(query, r)
+    rs, labels = places_to_points(places)
+    nodes = points_to_nodes(rs, labels)
+    for node in nodes:
+        print(node.label)
+    return Network(nodes, n_stops)
