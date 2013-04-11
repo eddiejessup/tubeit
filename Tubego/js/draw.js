@@ -1,7 +1,7 @@
 var colours, lines, offset, svg, svg_height, svg_width, _drawCircles, _drawLine, _mergeData;
 
-svg_width = 2000;
-svg_height = 2000;
+svg_width = 1000;
+svg_height = 700;
 offset = 0.02 * 2000;
 lines = [];
 colours = ['teal', 'silver', 'sienna', 'plum', 'orange', 'indigo', 'gold', 'cyan', 'red', 'aqua'];

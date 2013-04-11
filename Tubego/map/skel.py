@@ -4,8 +4,6 @@ import matplotlib as mpl
 import matplotlib.font_manager as fm
 import matplotlib.pyplot as pp
 
-#prop = fm.FontProperties(fname='London-Tube.ttf', size='small')
-
 np.random.seed(116)
 
 def dedupe(a):
@@ -16,17 +14,6 @@ def dedupe(a):
 
 class Network(object):
     d = 2
-    path_deets = (('Bakerloo', 'brown'),
-                  ('Central', '#fe5806'),
-                  ('Circle', 'yellow'),
-                  ('District', '#00c131'),
-                  ('East London', 'orange'),
-                  ('Hammersmith and City', '#ff9cb6'),
-                  ('Jubilee', '#8aa2af'),
-                  ('Metropolitan', 'purple'),
-                  ('Northern', '#4c554d'),
-                  ('Piccadilly', 'blue'),
-                  )
 
     def __init__(self, nodes, n_stops):
         self.nodes = nodes
@@ -57,25 +44,19 @@ class Network(object):
                 nodes_sort = [self.nodes[i] for i in inds]
             return nodes_sort
 
-        i_path = 0
-        while True:
-            try:
-                path = Path(*self.path_deets[i_path])
-            except IndexError:
-                path = Path('shink', 'black')
-
-            while True:
+        while len(self.nodes_in_network()) < len(self.nodes):
+            path = Path()
+            i_since_change = 0
+            while i_since_change < 1000:
                 for node in make_node_list(path):
                     if node_valid(path, node):
                         path.extend(node)
+                        i_since_change = 0
                         break
-                if len(path.nodes) > self.n_stops:# and self.is_terminus(path.end()):
+                if len(path.nodes) > self.n_stops:
                     break
-
+                i_since_change += 1
             self.paths.append(path)
-            if len(self.nodes_in_network()) == len(self.nodes):
-                break
-            i_path += 1
 
     def in_network(self, node):
         return node in self.nodes_in_network()
@@ -156,7 +137,7 @@ class Network(object):
                 v = Vertex(p.nodes[i], p.nodes[i + 1])
                 r = v.r_offset(0.007 * n_paths_vert_so_far(v))
                 verts_used.append(v)
-                l = mpl.lines.Line2D(r[:, 0], r[:, 1], color=p.color, lw=3)
+                l = mpl.lines.Line2D(r[:, 0], r[:, 1], color='black', lw=3)
                 ax.add_line(l)
 
         if fname is None: pp.show()
@@ -167,9 +148,8 @@ class Network(object):
         return [p.jsonable() for p in self.paths]
 
 class Path(object):
-    def __init__(self, label, color):
+    def __init__(self, label=''):
         self.label = label
-        self.color = color
         self.nodes = []
 
     def extend(self, node):
@@ -298,18 +278,22 @@ def make_points(n, r_sep_min):
             if valid: break
     return rs
 
-n_stops = 15
+n_stops = 10
 
-def points_to_nodes(rs, labels):
+def points_to_network(rs, labels):
     rs -= np.min(rs, axis=0)
     rs /= np.max(rs, axis=0)
+
+    rs -= 0.5
+    rs *= 0.9
+    rs += 0.5
 
     nodes = []
     for i in range(len(rs)):
         nodes.append(Node(rs[i], labels[i]))
-    return nodes
+    return Network(nodes, n_stops)
 
-def places_to_points(places):
+def places_to_network(places):
     rs = np.zeros([len(places), 2], dtype=np.float)
     labels = []
     for i in range(len(places)):
@@ -317,13 +301,6 @@ def places_to_points(places):
         loc = place['geometry']['location']
         rs[i, :] = [loc['lat'], loc['lng']]
         labels.append(place['name'])
-    return rs, labels
-
-def query_to_network(query, r):
-    import place_search
-    places = place_search.text_to_nearby(query, r)
-    rs, labels = places_to_points(places)
-    nodes = points_to_nodes(rs, labels)
-    for node in nodes:
-        print(node.label)
-    return Network(nodes, n_stops)
+    network = points_to_network(rs, labels)
+    network.simplify()
+    return network
