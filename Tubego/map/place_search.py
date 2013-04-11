@@ -13,12 +13,10 @@ class Searcher(object):
 
     def get_response(self, args):
         request_path = '%s&%s' % (self.path_base, urllib.urlencode(args))
-        print(request_path)
         self.conn.request('GET', request_path)
         response = self.conn.getresponse()
         body = response.read()
         results = json.loads(body)
-        print(body)
         return results
 
 class PlacesSearcher(Searcher):
