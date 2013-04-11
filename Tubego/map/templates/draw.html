@@ -1,12 +1,17 @@
-{% extends "base.html" %}
-{% block scripts %}<script src="http://d3js.org/d3.v3.min.js"></script>{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--    <link rel="stylesheet" href="{{ STATIC_URL }}base.css" />-->
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <title>Map</title>
+</head>
 
-{% block content %}
-        <div id="tube-map" style="width: 500px; height: 500px"></div>
-        <script src="{{ STATIC_URL }}draw.js"></script>
-        <script type="text/javascript">
-            var network = {{ network|safe }};
-            main(network);
-        </script>
-
-{% endblock %}
+<body>
+    <div id="tube-map" style="width: 500px; height: 500px"></div>
+    <script src="{{ STATIC_URL }}draw.js"></script>
+    <script type="text/javascript">
+        main({{ network|safe }});
+    </script>
+    {% include "messages.html" %}
+</body>
+</html>
