@@ -13,13 +13,12 @@ class Searcher(object):
 
     def get_response(self, args):
         request_path = '%s&%s' % (self.path_base, urllib.urlencode(args))
+        print(request_path)
         self.conn.request('GET', request_path)
         response = self.conn.getresponse()
-#        print(dir(response.getheaders()))
-#        encoding = response.headers.get_content_charset()
         body = response.read()
-        print(body)
         results = json.loads(body)
+        print(body)
         return results
 
 class PlacesSearcher(Searcher):
@@ -79,6 +78,7 @@ class NearbySearcher(PlacesSearcher):
         args = {
             'location': '%s,%s' % (lat, long),
             'radius': rad,
+            'types': 'bar',
         }
         results = self.get_response(args)
         return results
