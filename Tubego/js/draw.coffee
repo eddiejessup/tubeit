@@ -47,7 +47,7 @@ _drawCircles  = (lineData, SVG) ->
 	textAttributes = text
 	    .attr("x",  (d) -> (d.r[0] * svg_width + offset))
 	    .attr("y",  (d) -> (d.r[1] * svg_height+ offset))
-		.text((d) -> (d.text))
+		.text((d) -> (d.label))
 
 # the draw line function on the the SVG with a given colour
 _drawLine = (lineData, colour, SVG) ->
