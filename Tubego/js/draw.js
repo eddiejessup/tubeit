@@ -1,4 +1,4 @@
-var colours, lines, offset, svg, svg_height, svg_width, _drawCircles, _drawLine, _mergeData;
+var main, colours, lines, offset, svg, svg_height, svg_width, _drawCircles, _drawLine, _mergeData;
 
 svg_width = 2000;
 svg_height = 2000;
@@ -50,7 +50,7 @@ _drawLine = function(lineData, colour, SVG) {
 
 svg = d3.select("#tube-map").append("svg").attr("width", svg_width).attr("height", svg_height);
 
-function main(jsondata) {
+main = function(jsondata) {
     var allData, i, line, _i, _len;
 
     for (i in jsondata) {

@@ -11,7 +11,7 @@ MANAGERS = ADMINS
 
 if socket.gethostname() == 'elap':
     PROJECT_DIR = '/home/ejm/tubeit/Tubego/'
-elif socket.gethostname() == 'fergus hostname':
+elif socket.gethostname() == 'fcullens-MacBook.local':
     PROJECT_DIR = '/Users/fcullen/EclipseProjects/tubeit/Tubego/'
 else:
     PROJECT_DIR = raw_input('I do not know you, enter the path to Tubego: ')
