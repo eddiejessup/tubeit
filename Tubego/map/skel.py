@@ -14,10 +14,10 @@ def dedupe(a):
 
 class Network(object):
     d = 2
+    n_stops = 10
 
-    def __init__(self, nodes, n_stops):
+    def __init__(self, nodes):
         self.nodes = nodes
-        self.n_stops = n_stops
         self.paths = []
 
         def node_valid(path, node):
@@ -107,23 +107,18 @@ class Network(object):
         ax.set_xlim([-0.1, 1.1])
         ax.set_ylim([-0.1, 1.1])
 
-        pp.grid(True, color='#4ac6ff', linestyle='-')
-        pp.xticks(np.arange(0.0, 1.01, 0.1))
-        pp.yticks(np.arange(0.0, 1.01, 0.1))
+        ax.grid(True, color='#4ac6ff', linestyle='-')
+        ax.set_xticks(np.arange(0.0, 1.01, 0.1))
+        ax.set_yticks(np.arange(0.0, 1.01, 0.1))
 
         for node in self.nodes:
             if self.is_junction(node):
                 c = mpl.patches.Circle(node.r, radius=0.005, fc='white', ec='black', lw=2, zorder=10)
             else:
-                ps = self.get_paths_node(node)
                 if self.is_stop(node):
-                    if len(ps) > 1:
-                        c = mpl.patches.Circle(node.r, radius=0.0075, fc='black', lw=0, zorder=10)
-                    else:
-                        c = mpl.patches.Circle(node.r, radius=0.0075, fc=ps[0].color, lw=0, zorder=10)
+                    c = mpl.patches.Circle(node.r, radius=0.0075, fc='blue', lw=0, zorder=10)
                 elif self.is_terminus(node):
-                    assert len(ps) == 1
-                    c = mpl.patches.Circle(node.r, radius=0.015, fc=ps[0].color, lw=0, zorder=10)
+                    c = mpl.patches.Circle(node.r, radius=0.015, fc='green', lw=0, zorder=10)
                 else:
                     raise Exception
             ax.add_patch(c)
@@ -141,8 +136,7 @@ class Network(object):
                 ax.add_line(l)
 
         if fname is None: pp.show()
-        else: pp.savefig('%s.png' % fname)
-        pp.cla()
+        else: fig.savefig('%s.png' % fname)
 
     def jsonable(self):
         return [p.jsonable() for p in self.paths]
@@ -220,6 +214,7 @@ class Node(object):
         return {'label': self.label, 'r': [self.r[0], self.r[1]]}
 
 class Vertex(object):
+    r_sep_min = 0.05
     thetas = np.linspace(-np.pi, np.pi, 9)
 
     def __init__(self, node1, node2):
@@ -255,30 +250,15 @@ class Vertex(object):
     def simplify(self):
         v = self.v()
         theta_s = self.thetas[np.abs(self.thetas - np.arctan2(v[1], v[0])).argmin()]
-        self.node2.r = self.node1.r + np.array([np.cos(theta_s), np.sin(theta_s)]) * np.sqrt(np.sum(np.square(v)))
+        u = np.array([np.cos(theta_s), np.sin(theta_s)])
+        mag = np.maximum    (np.sqrt(np.sum(np.square(v))), self.r_sep_min)
+        self.node2.r = self.node1.r + u * mag
 
 def JSONHandler(Obj):
     if hasattr(Obj, 'jsonable'):
         return Obj.jsonable()
     else:
         raise TypeError('Object of type %s with value of %s is not JSON serializable' % (type(Obj), repr(Obj)))
-
-def make_points(n, r_sep_min):
-    n_nodes = 200
-    r_sep_min = 0.05
-
-    rs = np.zeros([n, 2])
-    for i in range(len(rs)):
-        while True:
-            rs[i] = np.random.uniform(0.0, 1.0, size=2)
-            valid = True
-            if not 0.0 < rs[i, 0] < 1.0: valid = False
-            if not 0.0 < rs[i, 1] < 1.0: valid = False
-            if i > 0 and np.sqrt(np.sum(np.square(rs[i] - rs[:i]), axis=-1)).min() < r_sep_min: valid = False
-            if valid: break
-    return rs
-
-n_stops = 10
 
 def points_to_network(rs, labels):
     rs -= np.min(rs, axis=0)
@@ -291,7 +271,7 @@ def points_to_network(rs, labels):
     nodes = []
     for i in range(len(rs)):
         nodes.append(Node(rs[i], labels[i]))
-    return Network(nodes, n_stops)
+    return Network(nodes)
 
 def places_to_network(places):
     rs = np.zeros([len(places), 2], dtype=np.float)
@@ -304,3 +284,17 @@ def places_to_network(places):
     network = points_to_network(rs, labels)
     network.simplify()
     return network
+
+def main():
+    rs = np.random.uniform(0.0, 1.0, size=(100, 2))
+    labels = ['' for _ in range(len(rs))]
+    network = points_to_network(rs, labels)
+    for i in range(5):
+        network.plot(fname=i)
+        network.simplify()
+
+if __name__ == '__main__':
+    try:
+        main()
+    except AttributeError:
+        pass

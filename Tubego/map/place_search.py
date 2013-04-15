@@ -101,7 +101,11 @@ def location(r):
 def text_to_nearby(query, rad=100.0):
     st = TextSearcher()
     rt = st.search(query)
-    lat, long = location(rt['results'][0])
+    try:
+        lat, long = location(rt['results'][0])
+    except IndexError:
+        print(rt)
+        raise Exception
     sn = NearbySearcher()
     rn = sn.search(lat, long, rad)
     return rn['results']
