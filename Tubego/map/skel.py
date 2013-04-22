@@ -3,6 +3,9 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.font_manager as fm
 import matplotlib.pyplot as pp
+import metro
+import potentials
+import utils
 
 np.random.seed(116)
 
@@ -254,6 +257,40 @@ class Vertex(object):
         mag = np.maximum    (np.sqrt(np.sum(np.square(v))), self.r_sep_min)
         self.node2.r = self.node1.r + u * mag
 
+class MetroNetwork(Network, metro.MetroSystem):
+    def get_U(self):
+        def U_node_field_func(node):
+            if not 0.0 < node.r[0] < 1.0: return 100.0
+            if not 0.0 < node.r[1] < 1.0: return 100.0
+            return 0.0
+
+        def U_node_inter_func(node):
+            func = potentials.LJ(0.05, 1.0)
+            U_node_inter = 0.0
+            for i in range(len(self.nodes)):
+                node_2 = self.nodes[i]
+                if node is not node_2:
+                    U_node_inter += func(utils.vector_mag_sq(node.r - node_2.r))
+            return U_node_inter
+
+        U = 0.0
+        for i in range(len(self.nodes)):
+            node = self.nodes[i]
+            U += U_node_field_func(node)
+#            U += U_node_inter_func(node)
+        return U
+
+    def store_state(self):
+        self.node_rs_0 = [node.r.copy() for node in self.nodes]
+
+    def revert_state(self):
+        for i in range(len(self.nodes)):
+            self.nodes[i].r = self.node_rs_0[i].copy()
+
+    def perturb(self):
+        i = np.random.randint(len(self.nodes))
+        self.nodes[i].r += np.random.uniform(-0.01, 0.01, self.d)
+
 def JSONHandler(Obj):
     if hasattr(Obj, 'jsonable'):
         return Obj.jsonable()
@@ -271,7 +308,7 @@ def points_to_network(rs, labels):
     nodes = []
     for i in range(len(rs)):
         nodes.append(Node(rs[i], labels[i]))
-    return Network(nodes)
+    return MetroNetwork(nodes)
 
 def places_to_network(places):
     rs = np.zeros([len(places), 2], dtype=np.float)
@@ -286,15 +323,14 @@ def places_to_network(places):
     return network
 
 def main():
-    rs = np.random.uniform(0.0, 1.0, size=(100, 2))
+    rs = np.random.uniform(0.0, 1.0, size=(60, 2))
     labels = ['' for _ in range(len(rs))]
     network = points_to_network(rs, labels)
-    for i in range(5):
-        network.plot(fname=i)
-        network.simplify()
+    for i in range(500):
+        if not i % 20: network.plot(fname=i)
+#        network.simplify()
+        network.iterate(0.1)
+        print(i, network.get_U())
 
 if __name__ == '__main__':
-    try:
-        main()
-    except AttributeError:
-        pass
+    main()
