@@ -8,16 +8,15 @@ np.random.seed(116)
 
 def jsonned(g):
     ns = g.nodes(data=True)
-    ps = paths(g)
-    ps = {k: ps[k].nodes() for k in ps}
+    ps = [p.nodes() for p in paths(g)]
     return {'nodes': ns, 'paths': ps}
 
 def paths(g):
-    ps = {}
+    ps = []]
     for u,v,d in g.edges(data=True):
         path_label = d['path']
         if path_label not in ps.keys():
-            ps[path_label] = nx.Graph([(u1,v1,d1) for u1,v1,d1 in g.edges(data=True) if d1['path'] is path_label])
+            ps.append(nx.Graph([(u1,v1,d1) for u1,v1,d1 in g.edges(data=True) if d1['path'] is path_label]))
     return ps
 
 def plot(g, fname=None):
@@ -39,7 +38,7 @@ def plot(g, fname=None):
         ax.add_patch(c)
 
     ps = paths(g)
-    for p, c in zip(ps.values(), np.linspace(0, 1, len(ps))):
+    for p, c in zip(ps, np.linspace(0, 1, len(ps))):
         rs = []
         for u,v,d in p.edges(data=True):
             x, y = np.array([g.node[u]['r'], g.node[v]['r']]).T
@@ -69,13 +68,6 @@ def n_list(g, p):
     else:
         inds = np.argsort([n_sep(g, p[-1], n) for n in g])
         return [g.nodes()[i] for i in inds]
-
-def places_to_graph(places):
-    g = nx.MultiGraph()
-    for i in range(len(places)):
-        place = places[i]
-        loc = place['geometry']['location']
-        g.add_node(place['name'], r=np.array([loc['lat'], loc['lng']]))
 
 def normalise_rs(g):
     rs = np.array([g.node[n]['r'] for n in g])
@@ -117,13 +109,20 @@ def simplify(g):
         if np.all(np.abs(r_new) < 0.5): g.node[n2]['r'] = r_new
     return g
 
+def places_to_graph(places):
+    g = nx.MultiGraph()
+    for i in range(len(places)):
+        place = places[i]
+        loc = place['geometry']['location']
+        g.add_node(i, label=place['name'], r=np.array([loc['lat'], loc['lng']]))
+
 def random_graph():
     g_nodes = 100
 
     g = nx.MultiGraph()
     rs = np.random.uniform(-0.5, 0.5, size=(g_nodes, 2))
     for i in range(len(rs)):
-        g.add_node(i, r=rs[i])
+        g.add_node(i, label='', r=rs[i])
     return g
 
 def main():
