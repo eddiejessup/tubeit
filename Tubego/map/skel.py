@@ -28,7 +28,7 @@ class MetroGraph(metro.MetroSystem):
             if d['Uf']:
                 U = 0.0
                 for x in d['r']:
-                    if abs(x) > 0.5: U += 10.0
+                    if not 0.0 < abs(x) < 1.0: U += 10.0
                 d['U'] = U
                 d['Uf'] = False
             return d['U']
@@ -69,8 +69,8 @@ def plot(g, fname=None):
     fig = pp.figure()
     ax = fig.gca()
     ax.set_aspect('equal')
-    ax.set_xlim([-0.6, 0.6])
-    ax.set_ylim([-0.6, 0.6])
+    ax.set_xlim([-0.1, 1.1])
+    ax.set_ylim([-0.1, 1.1])
     ax.set_xticks([])
     ax.set_yticks([])
 
@@ -133,7 +133,7 @@ def normalise_rs(g):
     rs /= np.max(rs, axis=0)
     rs -= 0.5
     rs *= 0.8
-    # rs += 0.5
+    rs += 0.5
     for n, r in zip(g, rs):
         g.node[n]['r'] = r
 
@@ -157,34 +157,8 @@ def grow(g):
         i_p += 1
 
 def simplify(g):
-    r_sep_min = 0.01
-    thetas = np.linspace(-np.pi, np.pi, 9)
-
-    for u,v in g.edges():
-        r_sep = sep(g, u, v)
-        r_sep_mag = sep_mag(g, u, v)
-        diff_mag = r_sep_min - r_sep_mag
-        if diff_mag > 0.0:
-            diff = (r_sep / r_sep_mag) * (diff_mag / 1.95)
-            g.node[v]['r'] -= diff
-            g.node[v]['Uf'] = True
-            g.node[u]['r'] += diff
-            g.node[u]['Uf'] = True
-            for u1,v1,d1 in g.edges(u, data=True):
-                d1['Uf'] = True
-            for u1,v1,d1 in g.edges(v, data=True):
-                d1['Uf'] = True
-
-    for u,v,d in g.edges(data=True):
-        r_sep = sep(g, u, v)
-        theta_s = thetas[np.abs(thetas - np.arctan2(r_sep[1], r_sep[0])).argmin()]
-        direct = np.array([np.cos(theta_s), np.sin(theta_s)])
-        mag = sep_mag(g, u, v)
-        g.node[v]['r'] = g.node[u]['r'] + direct * mag
-
-def simplify_monty(g):
     mg = MetroGraph(g)
-    for _ in range(100000): mg.iterate(0.3)
+    for _ in range(10000): mg.iterate(0.3)
 
 def places_graph(places):
     g = nx.MultiGraph()
@@ -206,16 +180,11 @@ def main():
     grow(g)
     mg = MetroGraph(g)
 
-    for _ in range(100000): 
-        if not _ % 4000: 
+    for _ in range(10000): 
+        if not _ % 2000: 
             plot(mg.g, _)
             print(_)
         mg.iterate(0.3)
-        # print(mg.get_U())
-    #     print(graph_energy(g))
-    #     simplify(g)
-    # plot(g)
-    # jdata = jsonned(g)
     # nx.draw(g)
     # pp.show()
 
