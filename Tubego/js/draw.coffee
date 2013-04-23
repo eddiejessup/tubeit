@@ -1,29 +1,15 @@
-# set up the svg renderer
-svg_width = 2000
-svg_height = 2000
+svg_width = window.innerWidth
+svg_height = window.innerHeight
 
-offset = 0.02*2000
+offset = 0.01
 
-# initiate the liens and colouts data
-lines = []
 colours = ['teal', 'silver', 'sienna', 'plum', 'orange', 'indigo', 'gold', 'cyan', 'red', 'aqua']
 
-# merge data function for drawing all the circles, need to work out a wat
-# to make the curcles draw for each line object individually but thats not
-# working atm.
-_mergeData = (lines) ->
+_drawCircles = (nodes, SVG) ->
 
-	final_array = []
-	for line in lines
-		Array::push.apply final_array, line
-
-	return final_array
-
-# draw the circles from the line data onto the SVG
-_drawCircles  = (lineData, SVG) ->
-
+	console.log(nodes)
 	circles = SVG.selectAll("circle")
-	    .data(lineData)
+	    .data(nodes)
 	    .enter()
 	    .append("circle")
 	    .style("fill", "white")
@@ -31,39 +17,37 @@ _drawCircles  = (lineData, SVG) ->
 	    .style("stroke-width", 4)
 
 	circleAttributes = circles
-	    .attr("cx",  (d) -> (d.r[0] * svg_width))
-	    .attr("cy",  (d) -> (d.r[1] * svg_height))
-	    .attr("r",  8)
-
+	    .attr("cx", (d) -> (d.x * svg_width))
+	    .attr("cy", (d) -> (d.y * svg_height))
+	    .attr("r", 7)
 
 	text = SVG.selectAll('text')
-		.data(lineData)
+		.data(nodes)
 		.enter()
 		.append('text')
 		.style('font-family', 'sans-serif')
-		.style('font-size', 25)
+		.style('font-size', 16)
 		.style('fill' , 'gray')
 
 	textAttributes = text
-	    .attr("x",  (d) -> (d.r[0] * svg_width + offset))
-	    .attr("y",  (d) -> (d.r[1] * svg_height+ offset))
+	    .attr("x", (d) -> ((d.x + offset) * svg_width))
+	    .attr("y", (d) -> ((d.y + offset) * svg_height))
 		.text((d) -> (d.label))
 
-# the draw line function on the the SVG with a given colour
-_drawLine = (lineData, colour, SVG) ->
+_drawLine = (nodes, path, colour, SVG) ->
 
 	lineFunction = d3.svg.line()
-	                  .x((d) -> d.r[0] * svg_width)
-	                  .y((d) -> d.r[1] * svg_height)
+	                  .x((d) -> nodes[d].x * svg_width)
+	                  .y((d) -> nodes[d].y * svg_height)
 	                  .interpolate("cardinal")
 
 	lineGraph = SVG.append("path")
-		.attr("d", lineFunction(lineData))
+		.attr("d", lineFunction(path.nodes))
 		.attr("stroke", colour)
-		.attr("stroke-width", 7)
+		.attr("stroke-width", 5)
 		.attr("fill", "none")
 	    .attr("fill", "none")
-		.attr('opacity', '0.9')
+		.attr('opacity', '0.6')
 
 	totalLength = lineGraph.node().getTotalLength()
 
@@ -75,23 +59,12 @@ _drawLine = (lineData, colour, SVG) ->
 	    .ease("linear")
 	    .attr("stroke-dashoffset", 0)
 
-main = (jsondata) ->
+main = (data) ->
 
 	svg = d3.select("#tube-map")
 			.append("svg")
 			.attr("width", svg_width)
 			.attr("height", svg_height)
 
-	# loop though the values in the json data
-	for i, value of jsondata
-		lines[i] = value.nodes
-		console.log(lines[i])
-
-		# everything from here needs to be indented to make sure it falls within the
-		# d3.json call
-
-	# run the draw line function
-	_drawLine(line, colours[i], svg) for line, i in lines
-	# run the draw circle function
-	allData = _mergeData(lines)
-	_drawCircles(allData, svg)
+	_drawCircles(data.nodes, svg)
+	_drawLine(data.nodes, path, colours[i], svg) for path, i in data.paths

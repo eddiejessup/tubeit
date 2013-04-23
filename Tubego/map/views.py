@@ -16,9 +16,12 @@ def search(request):
         form = SearchForm(request.POST)
         if form.is_valid():
             places = place_search.text_to_nearby(form.cleaned_data['query'], form.cleaned_data['r'])
-            net = skel.places_to_network(places)
-            net_json = json.dumps(net, default=skel.JSONHandler)
-            return render(request, 'draw.html', {'network': net_json})
+            g = skel.places_graph(places)
+            skel.normalise_rs(g)
+            skel.grow(g)
+            for _ in range(100): skel.simplify(g)
+            g_json = skel.jsonned(g)
+            return render(request, 'draw.html', {'graph': g_json})
     else:
         form = SearchForm()
     return render(request, 'search.html', {'form': form})
