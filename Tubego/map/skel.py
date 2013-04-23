@@ -3,8 +3,58 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as pp
 import networkx as nx
+import metro
+import potentials
 
 np.random.seed(116)
+
+class MetroGraph(metro.MetroSystem):
+    def __init__(self, g):
+        self.g = g
+        self.edge_length_U = potentials.LJ(0.03, 1.0)
+
+    def get_U(self):
+        def edge_energy(u, v, d):
+            if d['Uf']:
+                r_sep = sep(self.g, u, v)
+                theta = np.arctan2(r_sep[1], r_sep[0])
+                U = 1.0 - np.cos(4.0 * theta) ** 2
+                U *= self.edge_length_U(sep_mag(self.g, u, v) ** 2)
+                d['U'] = U
+                d['Uf'] = False
+            return d['U']
+
+        def node_energy(n, d):
+            if d['Uf']:
+                U = 0.0
+                for x in d['r']:
+                    if abs(x) > 0.5: U += 10.0
+                d['U'] = U
+                d['Uf'] = False
+            return d['U']
+
+        U = 0.0
+        for n,d in self.g.nodes(data=True):
+            U += node_energy(n, d)
+        for u,v,d in self.g.edges(data=True):
+            U += edge_energy(u, v, d)
+        return U
+
+    def store_state(self):
+        self.r_old = self.g.node[self.n_pert]['r'].copy()
+
+    def revert_state(self):
+        self.g.node[self.n_pert]['r'] = self.r_old.copy()
+
+    def perturb(self):
+        self.g.node[self.n_pert]['r'] += np.random.uniform(-0.01, 0.01, size=2)
+        self.g.node[self.n_pert]['Uf'] = True
+        for u,v,d in self.g.edges(self.n_pert, data=True):
+            d['Uf'] = True
+
+    def iterate(self, *args, **kwargs):
+        self.n_pert = self.g.nodes()[np.random.randint(len(self.g.nodes()))]
+        super(MetroGraph, self).iterate(*args, **kwargs)
 
 def jsonned(g):
     ns = []
@@ -15,20 +65,14 @@ def jsonned(g):
         ps.append({'label': p.graph['label'], 'nodes': [int(n) for n in p.nodes()]})
     return json.dumps({'nodes': ns, 'paths': ps})
 
-def paths(g):
-    ps = {}
-    for u,v,d in g.edges(data=True):
-        path_label = d['path']
-        if path_label not in ps.keys():
-            ps[path_label] = nx.Graph([(u1,v1,d1) for u1,v1,d1 in g.edges(data=True) if d1['path'] is path_label], label=path_label)
-    return ps.values()
-
 def plot(g, fname=None):
     fig = pp.figure()
     ax = fig.gca()
     ax.set_aspect('equal')
     ax.set_xlim([-0.6, 0.6])
     ax.set_ylim([-0.6, 0.6])
+    ax.set_xticks([])
+    ax.set_yticks([])
 
     for n in g:
         if len(g.neighbors(n)) > 2: # junction
@@ -52,47 +96,27 @@ def plot(g, fname=None):
     if fname is None: pp.show()
     else: fig.savefig('%s.png' % fname)
 
+def paths(g):
+    ps = {}
+    for u,v,d in g.edges(data=True):
+        path_label = d['path']
+        if path_label not in ps.keys():
+            ps[path_label] = nx.Graph([(u1,v1,d1) for u1,v1,d1 in g.edges(data=True) if d1['path'] is path_label], label=path_label)
+    return ps.values()
+
 def sep(g, u, v):
     return g.node[v]['r'] - g.node[u]['r']
 
 def sep_mag(g, u, v):
     return np.sqrt(np.sum(np.square(sep(g, u, v))))
 
-def edge_energy(g, u, v, d):
-    if d['Uf']:
-        r_sep = sep(g, u, v)
-        theta = np.arctan2(r_sep[1], r_sep[0])
-        U = 1.0 - np.cos(4.0 * theta) ** 2
-        # U *= 1.0 / sep_mag(g, u, v)
-        d['U'] = U
-        d['Uf'] = False
-    return d['U']
-
-def node_energy(g, n, d):
-    if d['Uf']:
-        U = 0.0
-        for x in d['r']:
-            if abs(x) > 0.5: U += 10.0
-        d['U'] = U
-        d['Uf'] = False
-    return d['U']
-
-def graph_energy(g):
-    U = 0.0
-    for n,d in g.nodes(data=True):
-        U += node_energy(g, n, d)
-    for u,v,d in g.edges(data=True):
-        U += edge_energy(g, u, v, d)
-    return U
-
 def orphans(g):
     return [n for n in g if not g.neighbors(n)]
 
 def n_valid(g, p, n):
-    if len(g.neighbors(n)) > 3: return False # Restrict number of neighbours
-    if len(g.edges(n)) > 3: return False # Restrict number of edges
-    # if len(g.neighbors(n)) == 1: return False # Leave termina as they are
     if n in p: return False # Stop paths passing through themselves
+    if len(g.neighbors(n)) > 2: return False # Restrict number of neighbours
+    if len(g.edges(n)) > 2: return False # Restrict number of edges
     if p and g.number_of_edges(p[-1], n) > 2: return False # Restrict number of parallel edges
     return True
 
@@ -132,9 +156,6 @@ def grow(g):
         g.add_path(p, path=i_p, Uf=True)
         i_p += 1
 
-# def simplify(g):
-#     r_sep_min = 0.03
-
 def simplify(g):
     r_sep_min = 0.01
     thetas = np.linspace(-np.pi, np.pi, 9)
@@ -161,6 +182,10 @@ def simplify(g):
         mag = sep_mag(g, u, v)
         g.node[v]['r'] = g.node[u]['r'] + direct * mag
 
+def simplify_monty(g):
+    mg = MetroGraph(g)
+    for _ in range(100000): mg.iterate(0.3)
+
 def places_graph(places):
     g = nx.MultiGraph()
     for i in range(len(places)):
@@ -179,10 +204,17 @@ def main():
     g = random_graph()
     normalise_rs(g)
     grow(g)
-    for _ in range(100): 
-        print(graph_energy(g))
-        simplify(g)
-    plot(g)
+    mg = MetroGraph(g)
+
+    for _ in range(100000): 
+        if not _ % 4000: 
+            plot(mg.g, _)
+            print(_)
+        mg.iterate(0.3)
+        # print(mg.get_U())
+    #     print(graph_energy(g))
+    #     simplify(g)
+    # plot(g)
     # jdata = jsonned(g)
     # nx.draw(g)
     # pp.show()
