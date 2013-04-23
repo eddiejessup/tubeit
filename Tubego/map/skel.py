@@ -3,12 +3,11 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as pp
 import networkx as nx
-import metro
 import potentials
 
 np.random.seed(116)
 
-class MetroGraph(metro.MetroSystem):
+class MetroGraph(object):
     def __init__(self, g):
         self.g = g
         self.edge_length_U = potentials.LJ(0.03, 1.0)
@@ -52,9 +51,13 @@ class MetroGraph(metro.MetroSystem):
         for u,v,d in self.g.edges(self.n_pert, data=True):
             d['Uf'] = True
 
-    def iterate(self, *args, **kwargs):
+    def iterate(self, beta):
         self.n_pert = self.g.nodes()[np.random.randint(len(self.g.nodes()))]
-        super(MetroGraph, self).iterate(*args, **kwargs)
+        U_0 = self.get_U()
+        self.store_state()
+        self.perturb()
+        if np.minimum(1.0, np.exp(-beta * (U_0 - self.get_U()))) > np.random.uniform():
+            self.revert_state()
 
 def jsonned(g):
     ns = []
