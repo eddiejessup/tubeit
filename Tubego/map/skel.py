@@ -119,7 +119,7 @@ def orphans(g):
 def n_valid(g, p, n):
     if n in p: return False # Stop paths passing through themselves
     if len(g.neighbors(n)) > 2: return False # Restrict number of neighbours
-    if len(g.edges(n)) > 2: return False # Restrict number of edges
+    if len(g.edges(n)) > 3: return False # Restrict number of edges
     if p and g.number_of_edges(p[-1], n) > 2: return False # Restrict number of parallel edges
     return True
 
