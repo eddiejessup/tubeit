@@ -53,30 +53,36 @@ def plot(g, fname=None):
     else: fig.savefig('%s.png' % fname)
 
 def sep(g, u, v):
-    return g.node[v]['r'] - g.node[v]['r']
+    return g.node[v]['r'] - g.node[u]['r']
 
 def sep_mag(g, u, v):
     return np.sqrt(np.sum(np.square(sep(g, u, v))))
 
-def edge_energy(g, e):
-    u, v = e
-    sep = sep(g, u, v)
-    theta = np.arctan2(sep[1], sep[0])
-    U = np.cos(4 * theta) ** 2
-    return U
+def edge_energy(g, u, v, d):
+    if d['Uf']:
+        r_sep = sep(g, u, v)
+        theta = np.arctan2(r_sep[1], r_sep[0])
+        U = 1.0 - np.cos(4.0 * theta) ** 2
+        # U *= 1.0 / sep_mag(g, u, v)
+        d['U'] = U
+        d['Uf'] = False
+    return d['U']
 
-def node_energy(g, n):
-    U = 0.0
-    for x in n['r']:
-        if abs(x) > 0.5: U += 1.0
-    return U
+def node_energy(g, n, d):
+    if d['Uf']:
+        U = 0.0
+        for x in d['r']:
+            if abs(x) > 0.5: U += 10.0
+        d['U'] = U
+        d['Uf'] = False
+    return d['U']
 
 def graph_energy(g):
     U = 0.0
-    for e in g.edges():
-        U += edge_energy(g, e)
-    for n in g.nodes():
-        U += node_energy(g, n)
+    for n,d in g.nodes(data=True):
+        U += node_energy(g, n, d)
+    for u,v,d in g.edges(data=True):
+        U += edge_energy(g, u, v, d)
     return U
 
 def orphans(g):
@@ -103,12 +109,12 @@ def normalise_rs(g):
     rs /= np.max(rs, axis=0)
     rs -= 0.5
     rs *= 0.8
-    rs += 0.5
+    # rs += 0.5
     for n, r in zip(g, rs):
         g.node[n]['r'] = r
 
 def grow(g):
-    p_length = 7
+    p_length = 10
 
     i_p = 0
     while orphans(g):
@@ -123,33 +129,37 @@ def grow(g):
             if len(p) > p_length:
                 break
             i_since_change += 1
-        g.add_path(p, path=i_p)
+        g.add_path(p, path=i_p, Uf=True)
         i_p += 1
 
 # def simplify(g):
 #     r_sep_min = 0.03
-#     thetas = np.linspace(-np.pi, np.pi, 9)
-
-#     for p in paths(g):
-#         for n1,n2,d in p.edges(data=True):
-#             v = g.node[n2]['r'] - g.node[n1]['r']
-#             theta_s = thetas[np.abs(thetas - np.arctan2(v[1], v[0])).argmin()]
-#             u = np.array([np.cos(theta_s), np.sin(theta_s)])
-#             mag = np.maximum(np.sqrt(np.sum(np.square(v))), r_sep_min)
-#             r_new = g.node[n1]['r'] + u * mag
-#             if np.all(np.abs(r_new) < 0.5): g.node[n2]['r'] = r_new
 
 def simplify(g):
-    sep_min = 0.15
+    r_sep_min = 0.01
+    thetas = np.linspace(-np.pi, np.pi, 9)
 
     for u,v in g.edges():
-        sep = sep(g, u, v)
-        sep_mag = sep_mag(g, u, v)
-        diff_mag = sep_min - sep_mag
+        r_sep = sep(g, u, v)
+        r_sep_mag = sep_mag(g, u, v)
+        diff_mag = r_sep_min - r_sep_mag
         if diff_mag > 0.0:
-            diff = (sep / sep_mag) * (diff_mag / 1.95)
-            g.node[u]['r'] -= diff
-            g.node[v]['r'] += diff
+            diff = (r_sep / r_sep_mag) * (diff_mag / 1.95)
+            g.node[v]['r'] -= diff
+            g.node[v]['Uf'] = True
+            g.node[u]['r'] += diff
+            g.node[u]['Uf'] = True
+            for u1,v1,d1 in g.edges(u, data=True):
+                d1['Uf'] = True
+            for u1,v1,d1 in g.edges(v, data=True):
+                d1['Uf'] = True
+
+    for u,v,d in g.edges(data=True):
+        r_sep = sep(g, u, v)
+        theta_s = thetas[np.abs(thetas - np.arctan2(r_sep[1], r_sep[0])).argmin()]
+        direct = np.array([np.cos(theta_s), np.sin(theta_s)])
+        mag = sep_mag(g, u, v)
+        g.node[v]['r'] = g.node[u]['r'] + direct * mag
 
 def places_graph(places):
     g = nx.MultiGraph()
@@ -162,7 +172,7 @@ def places_graph(places):
 def random_graph(g_nodes=100):
     g = nx.MultiGraph()
     for i in range(g_nodes):
-        g.add_node(i, label='', r=np.random.uniform(-0.5, 0.5, size=2))
+        g.add_node(i, label='', r=np.random.uniform(-0.5, 0.5, size=2), Uf=True)
     return g
 
 def main():
@@ -170,9 +180,9 @@ def main():
     normalise_rs(g)
     grow(g)
     for _ in range(100): 
-        simplify(g)
         print(graph_energy(g))
-    # plot(g)
+        simplify(g)
+    plot(g)
     # jdata = jsonned(g)
     # nx.draw(g)
     # pp.show()
