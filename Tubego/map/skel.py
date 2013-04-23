@@ -52,8 +52,32 @@ def plot(g, fname=None):
     if fname is None: pp.show()
     else: fig.savefig('%s.png' % fname)
 
-def n_sep(g, n1, n2):
-    return np.sqrt(np.sum(np.square(g.node[n1]['r'] - g.node[n2]['r'])))
+def sep(g, u, v):
+    return g.node[v]['r'] - g.node[v]['r']
+
+def sep_mag(g, u, v):
+    return np.sqrt(np.sum(np.square(sep(g, u, v))))
+
+def edge_energy(g, e):
+    u, v = e
+    sep = sep(g, u, v)
+    theta = np.arctan2(sep[1], sep[0])
+    U = np.cos(4 * theta) ** 2
+    return U
+
+def node_energy(g, n):
+    U = 0.0
+    for x in n['r']:
+        if abs(x) > 0.5: U += 1.0
+    return U
+
+def graph_energy(g):
+    U = 0.0
+    for e in g.edges():
+        U += edge_energy(g, e)
+    for n in g.nodes():
+        U += node_energy(g, n)
+    return U
 
 def orphans(g):
     return [n for n in g if not g.neighbors(n)]
@@ -70,7 +94,7 @@ def n_list(g, p):
     if not p:
         return np.random.permutation(orphans(g))
     else:
-        inds = np.argsort([n_sep(g, p[-1], n) for n in g])
+        inds = np.argsort([sep_mag(g, p[-1], n) for n in g])
         return [g.nodes()[i] for i in inds]
 
 def normalise_rs(g):
@@ -116,16 +140,16 @@ def grow(g):
 #             if np.all(np.abs(r_new) < 0.5): g.node[n2]['r'] = r_new
 
 def simplify(g):
-    r_sep_min = 0.15
+    sep_min = 0.15
 
-    for n1,n2 in g.edges():
-        v = g.node[n2]['r'] - g.node[n1]['r']
-        v_mag = np.sqrt(np.sum(np.square(v)))
-        diff_mag = r_sep_min - v_mag
+    for u,v in g.edges():
+        sep = sep(g, u, v)
+        sep_mag = sep_mag(g, u, v)
+        diff_mag = sep_min - sep_mag
         if diff_mag > 0.0:
-            diff = (v / v_mag) * (diff_mag/1.95)
-            g.node[n1]['r'] -= diff
-            g.node[n2]['r'] += diff
+            diff = (sep / sep_mag) * (diff_mag / 1.95)
+            g.node[u]['r'] -= diff
+            g.node[v]['r'] += diff
 
 def places_graph(places):
     g = nx.MultiGraph()
@@ -145,9 +169,11 @@ def main():
     g = random_graph()
     normalise_rs(g)
     grow(g)
-    # for _ in range(100): simplify(g)
+    for _ in range(100): 
+        simplify(g)
+        print(graph_energy(g))
     # plot(g)
-    jdata = jsonned(g)
+    # jdata = jsonned(g)
     # nx.draw(g)
     # pp.show()
 
