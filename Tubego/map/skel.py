@@ -159,9 +159,9 @@ def grow(g):
         g.add_path(p, path=i_p, Uf=True)
         i_p += 1
 
-def simplify(g):
-    mg = MetroGraph(g)
-    for _ in range(10000): mg.iterate(0.3)
+# def simplify(g):
+#     mg = MetroGraph(g)
+#     for _ in range(10000): mg.iterate(0.3)
 
 def places_graph(places):
     g = nx.MultiGraph()
@@ -177,19 +177,19 @@ def random_graph(g_nodes=100):
         g.add_node(i, label='', r=np.random.uniform(-0.5, 0.5, size=2), Uf=True)
     return g
 
-def main():
-    g = random_graph()
-    normalise_rs(g)
-    grow(g)
-    mg = MetroGraph(g)
+# def main():
+    # g = random_graph()
+    # normalise_rs(g)
+    # grow(g)
+    # mg = MetroGraph(g)
 
-    for _ in range(10000): 
-        if not _ % 2000: 
-            plot(mg.g, _)
-            print(_)
-        mg.iterate(0.3)
-    # nx.draw(g)
-    # pp.show()
+    # for _ in range(10000): 
+    #     if not _ % 2000: 
+    #         plot(mg.g, _)
+    #         print(_)
+    #     mg.iterate(0.3)
+    # # nx.draw(g)
+    # # pp.show()
 
 if __name__ == '__main__':
     main()
