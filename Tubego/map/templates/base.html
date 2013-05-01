@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>django-bootstrap-toolkit = Bootstrap support for Django</title>
+    <title>TubeIt</title>
     <meta name="description" content="">
     <meta name="author" content="Fergus Cullen">
     {% bootstrap_stylesheet_tag %}
@@ -17,6 +17,7 @@
     <script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
     {% bootstrap_javascript_tag %}
     {% block extra_head %}{% endblock %}
 </head>
@@ -26,7 +27,7 @@
 <div class="navbar navbar-fixed-top">
     <div class="navbar-inner">
         <div class="container">
-            <h2>Welcom to TubeiT!</h2>
+            <h2>Welcome to TubeIt!</h2>
         </div>
     </div>
 </div>
@@ -39,8 +40,14 @@
 
     <p><hr></p>
 
-    <footer class="row">
-        <div class="span6" style="text-align:right">
+    <footer class="row" style="position:fixed">
+        <div class="span12" style="text-align:right">
+            <p>
+                <p class="muted"> Brought to you by .. </p>
+                <a href="http://twitter.com/FergusCullen1"> @FergusCullen1 </a> and
+                <a href="https://twitter.com/EddieJessup"> @EddieJessup </a>
+            </p>
+    
         </div>
     </footer>
 

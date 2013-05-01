@@ -4,9 +4,9 @@ from bootstrap_toolkit.widgets import BootstrapDateInput, BootstrapTextInput, Bo
 class SearchForm(forms.Form):
     Place = forms.CharField(
         max_length=100,
-        widget=BootstrapTextInput()
+        widget=BootstrapTextInput(prepend='Location')
     )
 
     Radius = forms.FloatField(
-        widget=BootstrapTextInput()
+        widget=BootstrapTextInput(prepend='Radius')
     )

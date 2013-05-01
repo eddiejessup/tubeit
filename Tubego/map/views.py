@@ -11,18 +11,6 @@ from django.template.context import RequestContext
 
 from .forms import SearchForm
 
-# def search(request):
-#     if request.method == 'POST':
-#         form = SearchForm(request.POST)
-#         if form.is_valid():
-#             places = place_search.text_to_nearby(form.cleaned_data['query'], form.cleaned_data['r'])
-#             net = skel.places_to_network(places)
-#             net_json = json.dumps(net, default=skel.JSONHandler)
-#             return render(request, 'draw.html', {'network': net_json})
-#     else:
-#         form = SearchForm()
-#     return render(request, 'search.html', {'form': form})
-
 def draw(request):
     return HttpResponseRedirect('hi')
 

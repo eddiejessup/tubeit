@@ -8,21 +8,27 @@
 
 {% block content %}
 
-    <h1>Input a destination to create a TubeMap</h1>
-    
-    <p>&nbsp;</p>
-        
-    <form class="form-{{ layout }}" action="{{ current_path }}" method="post">
-        {% csrf_token %}
-        {{ form|as_bootstrap:layout }}
-        {% if layout == "horizontal" %}
-            <p class="form-actions">
-                <input type="submit" value="Submit" class="btn btn-primary">
-            </p>
-        {% else %}
-            <input type="submit" value="Submit" class="btn btn-primary">
-        {% endif %}
-    </form>
+    <header class="jumbotron subhead" id="overview">
+      <div class="container">
+        <h1>Where do you want to go?</h1>
+        <p class="lead">Input a destination and radius and we'll make a pub crawl
+        </p>
+      </div>
+    </header>
+
+    <div class='contatiner'>
+        <form class="form-{{ layout }}" action="{{ current_path }}" method="post">
+            {% csrf_token %}
+            {{ form|as_bootstrap:layout }}
+            {% if layout == "horizontal" %}
+                <p class="form-actions">
+                    <input type="submit" value="TubeIt!" class="btn btn-primary">
+                </p>
+            {% else %}
+                <input type="submit" value="TubeIt!" class="btn btn-primary">
+            {% endif %}
+        </form>
+    </div>
 
 {% endblock %}
 
