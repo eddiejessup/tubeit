@@ -114,7 +114,7 @@ def text_to_nearby(query, rad=100.0):
     rn = sn.search(lat, long, rad)
     return rn['results']
 
-def text_to_nearest(query, n, rad_0=100.0):
+def text_to_nearest(query, rad_0=100.0):
     lat, long = text_to_loc(query)
     sn = NearbySearcher()
     rad = rad_0

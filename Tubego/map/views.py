@@ -9,13 +9,12 @@ from map import skel
 
 class SearchForm(forms.Form):
     query = forms.CharField(max_length=100)
-    r = forms.FloatField()
 
 def search(request):
     if request.method == 'POST':
         form = SearchForm(request.POST)
         if form.is_valid():
-            places = place_search.text_to_nearest(form.cleaned_data['query'], 40)
+            places = place_search.text_to_nearest(form.cleaned_data['query'])
             g = skel.places_graph(places)
             skel.normalise_rs(g)
             skel.grow(g)
