@@ -159,16 +159,16 @@ def grow(g):
         g.add_path(p, path=i_p, Uf=True)
         i_p += 1
 
-# def simplify(g):
-#     mg = MetroGraph(g)
-#     for _ in range(10000): mg.iterate(0.3)
+def simplify(g, i=10000):
+    mg = MetroGraph(g)
+    for _ in range(i): mg.iterate(0.3)
 
 def places_graph(places):
     g = nx.MultiGraph()
     for i in range(len(places)):
         place = places[i]
         loc = place['geometry']['location']
-        g.add_node(i, label=place['name'], r=np.array([loc['lat'], loc['lng']]))
+        g.add_node(i, label=place['name'], r=np.array([loc['lat'], loc['lng']]), Uf=True)
     return g
 
 def random_graph(g_nodes=100):
@@ -177,19 +177,19 @@ def random_graph(g_nodes=100):
         g.add_node(i, label='', r=np.random.uniform(-0.5, 0.5, size=2), Uf=True)
     return g
 
-# def main():
-    # g = random_graph()
-    # normalise_rs(g)
-    # grow(g)
-    # mg = MetroGraph(g)
+def main():
+    g = random_graph()
+    normalise_rs(g)
+    grow(g)
+    mg = MetroGraph(g)
 
-    # for _ in range(10000): 
-    #     if not _ % 2000: 
-    #         plot(mg.g, _)
-    #         print(_)
-    #     mg.iterate(0.3)
-    # # nx.draw(g)
-    # # pp.show()
+    for _ in range(10000): 
+        if not _ % 2000: 
+            plot(mg.g, _)
+            print(_)
+        mg.iterate(0.3)
+    # nx.draw(g)
+    # pp.show()
 
 if __name__ == '__main__':
     main()

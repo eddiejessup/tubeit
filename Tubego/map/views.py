@@ -18,7 +18,7 @@ def search(request):
             g = skel.places_graph(places)
             skel.normalise_rs(g)
             skel.grow(g)
-            # for _ in range(100): skel.simplify(g)
+            skel.simplify(g, 10000)
             g_json = skel.jsonned(g)
             return render(request, 'draw.html', {'graph': g_json})
     else:
