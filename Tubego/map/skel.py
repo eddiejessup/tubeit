@@ -3,7 +3,6 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as pp
 import potentials
-import utils
 import networkx as nx
 
 np.random.seed(116)
