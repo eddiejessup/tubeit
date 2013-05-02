@@ -61,7 +61,7 @@ _drawLine = (nodes, path, colour, SVG) ->
 
 main = (data) ->
 
-	svg = d3.select("#tube-map")
+	svg = d3.select(".span12")
 			.append("svg")
 			.attr("width", svg_width)
 			.attr("height", svg_height)

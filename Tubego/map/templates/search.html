@@ -8,6 +8,16 @@
 
 {% block content %}
 
+    <!-- Heading / navagation bar -->
+    <div class="navbar navbar-fixed-top">
+        <div class="navbar-inner">
+            <div class="container">
+                <h2>Welcome to TubeIt!</h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- A jumbatron subhead to explain what to do -->
     <header class="jumbotron subhead" id="overview">
       <div class="container">
         <h1>Where do you want to go?</h1>
@@ -16,6 +26,7 @@
       </div>
     </header>
 
+    <!-- The query form -->
     <div class='container'>
         <form class="form-{{ layout }}" action="{{ current_path }}" method="post">
             {% csrf_token %}
@@ -28,6 +39,15 @@
                 <input type="submit" value="TubeIt!" class="btn btn-primary">
             {% endif %}
         </form>
+    </div>
+
+    <!-- How to do a static progress bar -->
+    <div>
+        <p class="lead">We're thinking ....</p>  
+        <div class="progress progress-striped active">
+
+             <div class="bar" style="width: 100%;"></div>  
+        </div> 
     </div>
 
 {% endblock %}

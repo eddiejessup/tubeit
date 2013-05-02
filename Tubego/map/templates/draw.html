@@ -1,11 +1,21 @@
 {% extends "base.html" %}
 
 {% block content %}
-	<script src="http://d3js.org/d3.v3.min.js"></script>
-    <div id="tube-map" style="width: 500px; height: 500px"></div>
-    <script src="{{ STATIC_URL }}draw.js"></script>
-    <script type="text/javascript">
-        main({{ graph|safe }});
-    </script>
+
+	
+    <div class="row-fluid">
+
+    	<div class="span12">
+
+    		<script src="http://d3js.org/d3.v3.min.js"></script>
+   			<script src="{{ STATIC_URL }}draw.js"></script>
+    		<script type="text/javascript">
+
+       	 	main({{ graph|safe }});
+    		</script>
+    	</div>
+
+    </div>
+
     {% include "messages.html" %}
 {% endblock %}
