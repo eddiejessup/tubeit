@@ -10,7 +10,7 @@ ADMINS = (('Elliot Marsden', 'elliot.marsden@gmail.com'), ('Fergus Cullen', 'fer
 MANAGERS = ADMINS
 
 if socket.gethostname() in ['elap', 'eserv']:
-    PROJECT_DIR = '/home/ejm/tubeit/Tubego/'
+    PROJECT_DIR = '/home/ejm/Tubeit/Tubego/'
 elif socket.gethostname() == 'fcullens-MacBook.local':
     PROJECT_DIR = '/Users/fcullen/EclipseProjects/tubeit/Tubego/'
 else:

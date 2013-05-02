@@ -98,7 +98,7 @@ class TextSearcher(PlacesSearcher):
 def location(r):
     return tuple(r['geometry']['location'].values())
 
-def text_to_nearby(query, rad=100.0):
+def text_to_loc(query):
     st = TextSearcher()
     rt = st.search(query)
     try:
@@ -106,8 +106,22 @@ def text_to_nearby(query, rad=100.0):
     except IndexError:
         print(rt)
         raise Exception
+    return lat, long
+
+def text_to_nearby(query, rad=100.0):
+    lat, long = text_to_loc(query)
     sn = NearbySearcher()
     rn = sn.search(lat, long, rad)
+    return rn['results']
+
+def text_to_nearest(query, rad_0=100.0):
+    lat, long = text_to_loc(query)
+    sn = NearbySearcher()
+    rad = rad_0
+    for _ in range(10):
+        rn = sn.search(lat, long, rad)
+        if len(rn['results']) > 18: break
+        rad *= 2
     return rn['results']
 
 def plot(query, rad=100.0):

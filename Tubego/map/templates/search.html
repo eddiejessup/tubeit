@@ -16,7 +16,7 @@
       </div>
     </header>
 
-    <div class='contatiner'>
+    <div class='container'>
         <form class="form-{{ layout }}" action="{{ current_path }}" method="post">
             {% csrf_token %}
             {{ form|as_bootstrap:layout }}
@@ -31,4 +31,3 @@
     </div>
 
 {% endblock %}
-

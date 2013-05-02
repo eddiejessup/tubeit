@@ -9,29 +9,29 @@ from map import skel
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 
-from .forms import SearchForm
-
-def draw(request):
-    return HttpResponseRedirect('hi')
+class SearchForm(forms.Form):
+    query = forms.CharField(max_length=100)
 
 def search(request):
-
     layout = request.GET.get('layout')
     if not layout:
         layout = 'vertical'
     if request.method == 'POST':
         form = SearchForm(request.POST)
-        form.is_valid()
-        if form.is_valid:
-            places = place_search.text_to_nearby(form.cleaned_data['Place'], form.cleaned_data['Radius'])
-            net = skel.places_to_network(places)
-            net_json = json.dumps(net, default=skel.JSONHandler)
-            return render(request, 'draw.html', {'network': net_json})
+        if form.is_valid():
+            places = place_search.text_to_nearest(form.cleaned_data['query'])
+            g = skel.places_graph(places)
+            skel.normalise_rs(g)
+            skel.grow(g)
+            skel.simplify(g, 10000)
+            g_json = skel.jsonned(g)
+            return render(request, 'draw.html', {'graph': g_json})
     else:
         form = SearchForm()
-    #return render(request, 'search.html', {'form': form})
-    modelform = SearchForm()
     return render_to_response('search.html', RequestContext(request, {
         'form': form,
         'layout': layout,
     }))
+
+def draw(request):
+    return HttpResponseRedirect('hi')
