@@ -1,14 +1,17 @@
 <!DOCTYPE html>
-{% load bootstrap_toolkit %}
 <html lang="en">
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Bootstrap CSS Toolkit styles -->
+    <link rel="stylesheet" href="http://blueimp.github.com/cdn/css/bootstrap.min.css">
+    <!-- Page favicon -->
     <link rel="icon" type="image/png" href="{{ STATIC_URL }}favicon.png">
+    <!-- Bootstrap styles for responsive website layout, supporting different screen sizes -->
+    <link rel="stylesheet" href="http://blueimp.github.com/cdn/css/bootstrap-responsive.min.css">
     <meta charset="utf-8">
     <title>TubeIt</title>
     <meta name="description" content="">
     <meta name="author" content="Fergus Cullen">
-    {% bootstrap_stylesheet_tag %}
-    {% bootstrap_stylesheet_tag "responsive" %}
     <style type="text/css">
         body {
             padding-top: 60px;
@@ -20,16 +23,12 @@
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
     <script src="http://d3js.org/d3.v3.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="assets/css/bootstrap-responsive.css" rel="stylesheet">
-    {% bootstrap_javascript_tag %}
-    {% block extra_head %}{% endblock %}
 </head>
 
 <body>
 
 <div class="container">
 
-    {% bootstrap_messages %}
     {% block content %}Empty page{% endblock %}
     <p><hr></p>
 
