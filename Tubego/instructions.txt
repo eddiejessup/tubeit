@@ -1,6 +1,5 @@
 Rquirements:
 - Django
-- Django-Bootstrap-Toolkit (https://github.com/dyve/django-bootstrap-toolkit)
 
 To try it out:
 	- Install django
