@@ -10,7 +10,7 @@ np.random.seed(116)
 class MetroGraph(object):
     def __init__(self, g):
         self.g = g
-        self.edge_length_U = potentials.LJ(0.03, 1.0)
+        # self.edge_length_U = potentials.LJ(0.03, 1.0)
 
     def get_U(self):
         def edge_energy(u, v, d):
@@ -18,7 +18,7 @@ class MetroGraph(object):
                 r_sep = sep(self.g, u, v)
                 theta = np.arctan2(r_sep[1], r_sep[0])
                 U = 1.0 - np.cos(4.0 * theta) ** 2
-                U *= self.edge_length_U(sep_mag(self.g, u, v) ** 2)
+                # U *= self.edge_length_U(sep_mag(self.g, u, v) ** 2)
                 d['U'] = U
                 d['Uf'] = False
             return d['U']
@@ -140,28 +140,47 @@ def normalise_rs(g):
     for n, r in zip(g, rs):
         g.node[n]['r'] = r
 
+# def grow(g):
+#     p_length = 10
+
+#     i_p = 0
+#     while orphans(g):
+#         p = []
+#         i_since_change = 0
+#         while i_since_change < 1000:
+#             for n in n_list(g, p):
+#                 if n_valid(g, p, n):
+#                     p.append(n)
+#                     i_since_change = 0
+#                     break
+#             if len(p) > p_length:
+#                 break
+#             i_since_change += 1
+#         g.add_path(p, path=i_p, Uf=True)
+#         i_p += 1
+
 def grow(g):
-    p_length = 10
+    p_length = 6
 
     i_p = 0
     while orphans(g):
-        p = []
-        i_since_change = 0
-        while i_since_change < 1000:
-            for n in n_list(g, p):
-                if n_valid(g, p, n):
-                    p.append(n)
-                    i_since_change = 0
-                    break
-            if len(p) > p_length:
-                break
-            i_since_change += 1
+        print(orphans(g))
+        n_subs = []
+        while len(n_subs) < p_length:
+            n = g.nodes()[np.random.randint(0, g.order())]
+            if n not in n_subs: n_subs.append(n)
+
+        p = [n_subs.pop(np.random.randint(0, len(n_subs)))]
+        while len(p) < p_length:
+            i_next = np.argsort([sep_mag(g, p[-1], n) for n in n_subs])[0]
+            p.append(n_subs.pop(i_next))
+
         g.add_path(p, path=i_p, Uf=True)
         i_p += 1
 
 def simplify(g, i=10000):
     mg = MetroGraph(g)
-    for _ in range(i): mg.iterate(0.3)
+    # for _ in range(i): mg.iterate(0.3)
 
 def places_graph(places):
     g = nx.MultiGraph()
