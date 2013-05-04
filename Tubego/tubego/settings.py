@@ -5,7 +5,9 @@ import socket
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
-ADMINS = (('Elliot Marsden', 'elliot.marsden@gmail.com'), ('Fergus Cullen', 'fergus.cullen89@gmail.com'))
+ADMINS = (('Elliot Marsden', 'elliot.marsden@gmail.com'),
+          ('Fergus Cullen', 'fergus.cullen89@gmail.com'),
+          ('Sam Thomson', 'sp.thomson@outlook.com'))
 
 MANAGERS = ADMINS
 
@@ -13,6 +15,8 @@ if socket.gethostname() in ['elap', 'eserv']:
     PROJECT_DIR = '/home/ejm/Tubeit/Tubego/'
 elif socket.gethostname() == 'fcullens-MacBook.local':
     PROJECT_DIR = '/Users/fcullen/EclipseProjects/tubeit/Tubego/'
+elif socket.gethostname() == 'Sams-MacBook.local':
+    PROJECT_DIR = '/Users/Sam/Code/tubeit/Tubego/'
 else:
     PROJECT_DIR = raw_input('I do not know you, enter the path to Tubego: ')
 if PROJECT_DIR[-1] != '/': PROJECT_DIR += '/'
@@ -117,7 +121,6 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'bootstrap_toolkit',
     # Uncomment the next line to enable the admin:
      'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:

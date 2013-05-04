@@ -1,7 +1,5 @@
 {% extends "base.html" %}
 
-{% load bootstrap_toolkit %}
-
 {% block extra_head %}
     {{ form.media }}
 {% endblock %}
@@ -21,33 +19,41 @@
     <header class="jumbotron subhead" id="overview">
       <div class="container">
         <h1>Where do you want to go?</h1>
-        <p class="lead">Input a destination and radius and we'll make a pub crawl
+        <p class="lead">Input a destination and we'll make a pub crawl map
         </p>
       </div>
     </header>
 
     <!-- The query form -->
-    <div class='container'>
-        <form class="form-{{ layout }}" action="{{ current_path }}" method="post">
+    <div id='form-container' class='container'>
+        <form id='form' class="form-{{ layout }}" action="{{ current_path }}" method="post">
             {% csrf_token %}
-            {{ form|as_bootstrap:layout }}
+            {{ form.as_p }}
             {% if layout == "horizontal" %}
-                <p class="form-actions">
-                    <input type="submit" value="TubeIt!" class="btn btn-primary">
-                </p>
+                <input id='button', type="submit" value="TubeIt!" class="btn btn-primary">
             {% else %}
-                <input type="submit" value="TubeIt!" class="btn btn-primary">
+                <input id='button', type="submit" value="TubeIt!" class="btn btn-primary">
             {% endif %}
         </form>
     </div>
 
-    <!-- How to do a static progress bar -->
-    <div>
+    <!-- How to do a static progress bar, intially hidden from the page -->
+    <div id="prog-bar-div" class='hidden'>
         <p class="lead">We're thinking ....</p>  
-        <div class="progress progress-striped active">
-
+        <div id="progress" class="progress progress-success progress-striped">
              <div class="bar" style="width: 100%;"></div>  
         </div> 
     </div>
+
+
+    <!-- Little bit of jQuery to make the progress bar appear on click -->
+    <script >
+        $(document).ready(function(){
+            $(document).on('click', '#button', function(){
+                $('#form-container').remove();
+                $('#prog-bar-div').removeClass("hidden");
+            });
+        });
+    </script>
 
 {% endblock %}

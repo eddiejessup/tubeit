@@ -10,7 +10,6 @@
     		<script src="http://d3js.org/d3.v3.min.js"></script>
    			<script src="{{ STATIC_URL }}draw.js"></script>
     		<script type="text/javascript">
-
        	 	main({{ graph|safe }});
     		</script>
     	</div>
@@ -18,4 +17,5 @@
     </div>
 
     {% include "messages.html" %}
+    
 {% endblock %}
