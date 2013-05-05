@@ -11,9 +11,10 @@ from django.shortcuts import redirect
 from django.template.context import RequestContext
 
 class SearchForm(forms.Form):
-    query = forms.CharField(max_length=100)
+    query = forms.CharField(max_length=100, label='')
 
 def search(request):
+
     layout = request.GET.get('layout')
 
     if not layout:
@@ -22,17 +23,20 @@ def search(request):
     if request.method == 'POST':
         form = SearchForm(request.POST)
         if form.is_valid():
-            places = place_search.text_to_nearest(form.cleaned_data['query'])
-            #request.GET = request.GET.copy()
-            #request.GET.update({'places':places})
-            #print(request.GET.get('places'))
-            #return render(request, 'map_load.html', {'places': places})]
-            g = skel.places_graph(places)
+
+            # places = place_search.text_to_nearest(form.cleaned_data['query'])
+            # g = skel.places_graph(places)
+
+            g = skel.random_graph(g_nodes=50)
             skel.normalise_rs(g)
             skel.grow(g)
             skel.simplify(g, 10000)
             g_json = skel.jsonned(g)
-            return render(request, 'draw.html', {'graph': g_json})
+
+            request.session['first_render'] = 1
+            request.session['graph_json'] = g_json
+
+            return redirect('draw')
     else:
         form = SearchForm()
 
@@ -40,3 +44,11 @@ def search(request):
         'form': form,
         'layout': layout,
     }))
+
+def draw(request):
+
+    g_json = request.session.get('graph_json')
+    first_render = request.session.get('first_render')
+    request.session['first_render'] = 0
+    return render(request, 'draw.html', {'graph': g_json, 'animate':first_render})
+

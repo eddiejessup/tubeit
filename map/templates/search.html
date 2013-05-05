@@ -6,15 +6,6 @@
 
 {% block content %}
 
-    <!-- Heading / navagation bar -->
-    <div class="navbar navbar-fixed-top">
-        <div class="navbar-inner">
-            <div class="container">
-                <h2>Welcome to TubeIt!</h2>
-            </div>
-        </div>
-    </div>
-
     <!-- A jumbatron subhead to explain what to do -->
     <header class="jumbotron subhead" id="overview">
       <div class="container">
@@ -38,22 +29,24 @@
     </div>
 
     <!-- How to do a static progress bar, intially hidden from the page -->
-    <div id="prog-bar-div" class='hidden'>
+    <div id="prog-bar-div" class="hidden">
         <p class="lead">We're thinking ....</p>  
-        <div id="progress" class="progress progress-success progress-striped">
-             <div class="bar" style="width: 100%;"></div>  
+        <div id="progress" class="progress progress-striped active">
+             <div class="bar" style='width: 100%;'></div>  
         </div> 
     </div>
 
-
     <!-- Little bit of jQuery to make the progress bar appear on click -->
     <script >
+    
         $(document).ready(function(){
+
             $(document).on('click', '#button', function(){
                 $('#form-container').remove();
                 $('#prog-bar-div').removeClass("hidden");
-            });
+
         });
+
     </script>
 
 {% endblock %}
