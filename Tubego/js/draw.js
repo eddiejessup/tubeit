@@ -29,7 +29,7 @@ _drawCircles = function(nodes, SVG) {
   });
 };
 
-_drawLine = function(nodes, path, colour, SVG) {
+_drawLine = function(nodes, path, colour, SVG, animate) {
   var lineFunction, lineGraph, totalLength;
 
   lineFunction = d3.svg.line().x(function(d) {
@@ -38,11 +38,16 @@ _drawLine = function(nodes, path, colour, SVG) {
     return nodes[d].y * svg_height;
   }).interpolate("cardinal");
   lineGraph = SVG.append("path").attr("d", lineFunction(path.nodes)).attr("stroke", colour).attr("stroke-width", 5).attr("fill", "none").attr("fill", "none").attr('opacity', '0.6');
-  totalLength = lineGraph.node().getTotalLength();
-  return lineGraph.attr("stroke-dasharray", totalLength + " " + totalLength).attr("stroke-dashoffset", totalLength).transition().duration(10000).ease("linear").attr("stroke-dashoffset", 0);
+  if (animate) {
+    totalLength = lineGraph.node().getTotalLength();
+    return lineGraph.attr("stroke-dasharray", totalLength + " " + totalLength).attr("stroke-dashoffset", totalLength).transition().duration(10000).ease("linear").attr("stroke-dashoffset", 0);
+  } else {
+    totalLength = lineGraph.node().getTotalLength();
+    return lineGraph.attr("stroke-dasharray", totalLength + " " + totalLength).attr("stroke-dashoffset", totalLength).transition().duration(0).ease("linear").attr("stroke-dashoffset", 0);
+  }
 };
 
-main = function(data) {
+main = function(data, animate) {
   var i, path, svg, _i, _len, _ref, _results;
 
   svg = d3.select(".span12").append("svg").attr("width", svg_width).attr("height", svg_height);
@@ -51,7 +56,7 @@ main = function(data) {
   _results = [];
   for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
     path = _ref[i];
-    _results.push(_drawLine(data.nodes, path, colours[i], svg));
+    _results.push(_drawLine(data.nodes, path, colours[i], svg, animate));
   }
   return _results;
 };

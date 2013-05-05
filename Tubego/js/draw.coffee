@@ -34,7 +34,7 @@ _drawCircles = (nodes, SVG) ->
 	    .attr("y", (d) -> ((d.y + offset) * svg_height))
 		.text((d) -> (d.label))
 
-_drawLine = (nodes, path, colour, SVG) ->
+_drawLine = (nodes, path, colour, SVG, animate) ->
 
 	lineFunction = d3.svg.line()
 	                  .x((d) -> nodes[d].x * svg_width)
@@ -49,17 +49,29 @@ _drawLine = (nodes, path, colour, SVG) ->
 	    .attr("fill", "none")
 		.attr('opacity', '0.6')
 
-	totalLength = lineGraph.node().getTotalLength()
+	if animate
+		totalLength = lineGraph.node().getTotalLength()
 
-	lineGraph
-	  .attr("stroke-dasharray", totalLength + " " + totalLength)
-	  .attr("stroke-dashoffset", totalLength)
-	  .transition()
-	    .duration(10000)
-	    .ease("linear")
-	    .attr("stroke-dashoffset", 0)
+		lineGraph
+		  .attr("stroke-dasharray", totalLength + " " + totalLength)
+		  .attr("stroke-dashoffset", totalLength)
+		  .transition()
+		    .duration(10000)
+		    .ease("linear")
+		    .attr("stroke-dashoffset", 0)
+	else
+		totalLength = lineGraph.node().getTotalLength()
 
-main = (data) ->
+		lineGraph
+		  .attr("stroke-dasharray", totalLength + " " + totalLength)
+		  .attr("stroke-dashoffset", totalLength)
+		  .transition()
+		    .duration(0)
+		    .ease("linear")
+		    .attr("stroke-dashoffset", 0)
+
+
+main = (data, animate) ->
 
 	svg = d3.select(".span12")
 			.append("svg")
@@ -67,4 +79,4 @@ main = (data) ->
 			.attr("height", svg_height)
 
 	_drawCircles(data.nodes, svg)
-	_drawLine(data.nodes, path, colours[i], svg) for path, i in data.paths
+	_drawLine(data.nodes, path, colours[i], svg, animate) for path, i in data.paths
