@@ -11,3 +11,4 @@ libs/
 .classpath
 *.png
 static/
+tubego.db
