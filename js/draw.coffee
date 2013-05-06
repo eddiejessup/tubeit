@@ -1,5 +1,5 @@
-svg_width = window.innerWidth
-svg_height = window.innerHeight
+svg_width = 0.8 * window.innerWidth
+svg_height = 0.7 * window.innerHeight
 
 offset = 0.01
 

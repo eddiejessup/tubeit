@@ -1,0 +1,11 @@
+Rquirements:
+- Django
+
+To try it out:
+	- Run "python manage.py runserver" in the directory where manage.py lives
+	- Go to localhost:8000/map/search
+	- Enter a map search query (e.g. Paris if you're feeling romantic/have no imagination)
+	- Await magic
+	- Be disappointed
+
+Notes:

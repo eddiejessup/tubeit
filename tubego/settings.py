@@ -12,11 +12,11 @@ ADMINS = (('Elliot Marsden', 'elliot.marsden@gmail.com'),
 MANAGERS = ADMINS
 
 if socket.gethostname() in ['elap', 'eserv']:
-    PROJECT_DIR = '/home/ejm/Tubeit/Tubego/'
+    PROJECT_DIR = '/home/ejm/Tubeit/'
 elif socket.gethostname() == 'fcullens-MacBook.local':
-    PROJECT_DIR = '/Users/fcullen/EclipseProjects/tubeit/Tubego/'
+    PROJECT_DIR = '/Users/fcullen/EclipseProjects/tubeit/'
 elif socket.gethostname() == 'Sams-MacBook.local':
-    PROJECT_DIR = '/Users/Sam/Code/tubeit/Tubego/'
+    PROJECT_DIR = '/Users/Sam/Code/tubeit/'
 else:
     PROJECT_DIR = raw_input('I do not know you, enter the path to Tubego: ')
 if PROJECT_DIR[-1] != '/': PROJECT_DIR += '/'
