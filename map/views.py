@@ -24,11 +24,10 @@ def search(request):
         form = SearchForm(request.POST)
         if form.is_valid():
 
-            # places = place_search.text_to_nearest(form.cleaned_data['query'])
-            # g = skel.places_graph(places)
+            places = place_search.text_to_nearest(form.cleaned_data['query'])
+            g = skel.places_graph(places)
 
             g = skel.random_graph(g_nodes=50)
-
             skel.normalise_rs(g)
             skel.grow(g)
             skel.simplify(g, 1.0, 0.02, 20000)

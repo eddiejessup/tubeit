@@ -1,82 +1,145 @@
 <!DOCTYPE html>
 <html lang="en">
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <!-- Bootstrap CSS Toolkit styles -->
+        <link rel="stylesheet" href="http://blueimp.github.com/cdn/css/bootstrap.min.css">
+        <link rel='stylesheet' type='text/css' href='{{ STATIC_URL }}base.css'/>
+        <!-- Page favicon -->
+        <link rel="icon" type="image/png" href="{{ STATIC_URL }}favicon.png">
+        <!-- Bootstrap styles for responsive website layout, supporting different screen sizes -->
+        <link rel="stylesheet" href="http://blueimp.github.com/cdn/css/bootstrap-responsive.min.css">
+        <meta charset="utf-8">
+        <title>TubeIt</title>
+        <meta name="description" content="">
+        <meta name="author" content="Fergus Cullen">
+        <style type="text/css">
+            body {
+                padding-top: 100px;
+            }
+        </style>
+        <!--[if lt IE 9]>
+        <script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
 
-<head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Bootstrap CSS Toolkit styles -->
-    <link rel="stylesheet" href="http://blueimp.github.com/cdn/css/bootstrap.min.css">
-    <link rel='stylesheet' type='text/css' href='{{ STATIC_URL }}base.css'/>
-    <!-- Page favicon -->
-    <link rel="icon" type="image/png" href="{{ STATIC_URL }}favicon.png">
-    <!-- Bootstrap styles for responsive website layout, supporting different screen sizes -->
-    <link rel="stylesheet" href="http://blueimp.github.com/cdn/css/bootstrap-responsive.min.css">
-    <meta charset="utf-8">
-    <title>TubeIt</title>
-    <meta name="description" content="">
-    <meta name="author" content="Fergus Cullen">
-    <style type="text/css">
-        body {
-            padding-top: 60px;
-        }
-    </style>
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
-    <script src="http://d3js.org/d3.v3.min.js"></script>
-</head>
+        <script src="http://d3js.org/d3.v3.min.js"></script>
+    </head>
 
-<body>
+    <body>
 
-     <!-- Navbar
-    ================================================== -->
-    <div class="navbar navbar-inverse navbar-fixed-top">
-      <div class="navbar-inner">
-        <div class="container">
-          <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="brand" href="/map/search">TubeIT Home</a>
-          <div class="nav-collapse collapse">
-            <ul class="nav">
-              <li class="">
-                <a href="/map/draw">Tube Map</a>
-              </li>
-            </ul>
+         <!-- Navbar
+        ================================================== 
+        <div class="navbar navbar-inverse navbar-fixed-top">
+          <div class="navbar-inner">
+            <div class="container">
+              <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+              <a class="brand" href="/map/search">TubeIT Home</a>
+              <div class="nav-collapse collapse">
+                <ul class="nav">
+                  <li class="">
+                    <a href="/map/draw">Tube Map</a>
+                  </li>
+                </ul>
+              </div>
+            </div>
           </div>
+        </div> -->
+
+
+        <!-- NAVBAR
+        ================================================== -->
+        <div class="navbar-wrapper">
+          <!-- Wrap the .navbar in .container to center it within the absolutely positioned parent. -->
+          <div class="container">
+
+            <div class="navbar navbar-inverse">
+              <div class="navbar-inner">
+                <!-- Responsive Navbar Part 1: Button for triggering responsive navbar (not covered in tutorial). Include responsive CSS to utilize. -->
+                <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                  <span class="icon-bar"></span>
+                  <span class="icon-bar"></span>
+                  <span class="icon-bar"></span>
+                </button>
+                <a class="brand" href="/map/search">TubeIT</a>
+                <!-- Responsive Navbar Part 2: Place all navbar contents you want collapsed withing .navbar-collapse.collapse. -->
+                <div class="nav-collapse collapse">
+                  <ul class="nav">
+                    <li class="active"><a href="/map/search">Home</a></li>
+                    <!-- Read about Bootstrap dropdowns at http://twitter.github.com/bootstrap/javascript.html#dropdowns -->
+                    <li class="dropdown">
+                      <a href="#" class="dropdown-toggle" data-toggle="dropdown">Tube Maps<b class="caret"></b></a>
+                      <ul class="dropdown-menu">
+                        <li><a href="/map/draw">Current Map</a></li>
+                        <li><a href="#">Another action</a></li>
+                        <li><a href="#">Something else here</a></li>
+                        <li class="divider"></li>
+                        <li class="nav-header">Nav header</li>
+                        <li><a href="#">Separated link</a></li>
+                        <li><a href="#">One more separated link</a></li>
+                      </ul>
+                    </li>
+                  </ul>
+                </div><!--/.nav-collapse -->
+              </div><!-- /.navbar-inner -->
+            </div><!-- /.navbar -->
+
+          </div> <!-- /.container -->
+        </div><!-- /.navbar-wrapper -->
+
+        <div class="container" style="text-align:center">
+
+            {% block content %}{% endblock %}
+            <p><hr></p>
+
         </div>
-      </div>
-    </div>
 
-    <div class="container" style="text-align:center">
+        <div class="container" style="text-align:center">
+            <!-- the footer with twitter addresses -->
+            <footer class="row" style="position:fixed">
+                <div class="span6" style="text-align:left">
+                    <p>
+                        <p class="muted"> Brought to you by: </p>
+                        <a href="http://twitter.com/FergusCullen1"> @FergusCullen1 </a> ,
+                        <a href="https://twitter.com/EddieJessup"> @EddieJessup </a> and
+                        <a href="https://twitter.com/SamThms"> @SamThms </a>
+                    </p>
+                </div>
+            
+                <div class="span6" style="text-align:right">
+                    <p>
+                        <p class="muted"> Powered by: </p>
+                        <a href="http://www.google.co.uk"> Google Maps</a>,
+                        <a href="http://twitter.github.io/bootstrap/"> TwitterBootstrap </a>,
+                        <a href="https://www.djangoproject.com/"> Django </a>,
+                        <a href="http://d3js.org/"> D3.js </a>
 
-        {% block content %}{% endblock %}
-        <p><hr></p>
+                    </p>
+                </div>
+            </footer>
+        </div> 
 
-    </div>
+         <!-- Le javascript
+        ================================================== -->
+        <!-- Placed at the end of the document so the pages load faster -->
+        <script src="{{ STATIC_URL }}jquery.js"></script>
+        <script src="{{ STATIC_URL }}bootstrap-transition.js"></script>
+        <script src="{{ STATIC_URL }}bootstrap-alert.js"></script>
+        <script src="{{ STATIC_URL }}bootstrap-modal.js"></script>
+        <script src="{{ STATIC_URL }}bootstrap-dropdown.js"></script>
+        <script src="{{ STATIC_URL }}bootstrap-scrollspy.js"></script>
+        <script src="{{ STATIC_URL }}bootstrap-tab.js"></script>
+        <script src="{{ STATIC_URL }}bootstrap-tooltip.js"></script>
+        <script src="{{ STATIC_URL }}bootstrap-popover.js"></script>
+        <script src="{{ STATIC_URL }}bootstrap-button.js"></script>
+        <script src="{{ STATIC_URL }}bootstrap-collapse.js"></script>
+        <script src="{{ STATIC_URL }}bootstrap-carousel.js"></script>
+        <script src="{{ STATIC_URL }}bootstrap-typeahead.js"></script>
+        <script src="{{ STATIC_URL }}bootstrap-affix.js"></script>
 
-    <div class="container" style="text-align:center">
-        <!-- the footer with twitter addresses -->
-        <footer class="row" style="position:fixed">
-            <div class="span6" style="text-align:left">
-                <p>
-                    <p class="muted"> Brought to you by: </p>
-                    <a href="http://twitter.com/FergusCullen1"> @FergusCullen1 </a> ,
-                    <a href="https://twitter.com/EddieJessup"> @EddieJessup </a> and
-                    <a href="https://twitter.com/SamThms"> @SamThms </a>
-                </p>
-            </div>
-        
-            <div class="span6" style="text-align:right">
-                <p>
-                    <p class="muted"> Powered by: </p>
-                    <a href="http://twitter.github.io/bootstrap/"> Twitter Bootstrap </a> ,
-                    <a href="https://www.djangoproject.com/"> Django </a> ,
-                    <a href="http://d3js.org/"> D3.js </a>
-                </p>
-            </div>
-        </footer>
-    </div> 
-
-</body>
+    </body>
 
 </html>

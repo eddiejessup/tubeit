@@ -14,7 +14,7 @@ MANAGERS = ADMINS
 if socket.gethostname() in ['elap', 'eserv']:
     PROJECT_DIR = '/home/ejm/Tubeit/'
 elif socket.gethostname() == 'fcullens-MacBook.local':
-    PROJECT_DIR = '/Users/fcullen/EclipseProjects/tubeit/'
+    PROJECT_DIR = '/Users/fcullen/tubeit/'
 elif socket.gethostname() == 'Sams-MacBook.local':
     PROJECT_DIR = '/Users/Sam/Code/tubeit/'
 else:
