@@ -1,4 +1,5 @@
 import json
+import itertools
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as pp
@@ -10,24 +11,39 @@ np.random.seed(116)
 class MetroGraph(object):
     def __init__(self, g):
         self.g = g
-        # self.edge_length_U = potentials.LJ(0.03, 1.0)
+        self.edge_length_U = potentials.LJ(0.03, 1.0)
 
     def get_U(self):
         def edge_energy(u, v, d):
             if d['Uf']:
                 r_sep = sep(self.g, u, v)
                 theta = np.arctan2(r_sep[1], r_sep[0])
-                U = 1.0 - np.cos(4.0 * theta) ** 2
-                # U *= self.edge_length_U(sep_mag(self.g, u, v) ** 2)
+                # U = 1.0 - np.cos(4.0 * theta) ** 2
+                U = self.edge_length_U(sep_mag(self.g, u, v) ** 2)
                 d['U'] = U
                 d['Uf'] = False
             return d['U']
+
+        # def node_energy(n, d):
+        #     if d['Uf']:
+        #         U = 0.0
+        #         for x in d['r']:
+        #             if not 0.0 < abs(x) < 1.0: U += 10.0
+        #         d['U'] = U
+        #         d['Uf'] = False
+        #     return d['U']
 
         def node_energy(n, d):
             if d['Uf']:
                 U = 0.0
                 for x in d['r']:
-                    if not 0.0 < abs(x) < 1.0: U += 10.0
+                    if not 0.0 < x < 1.0: 
+                        U += np.inf
+
+                for n2 in self.g.nodes():
+                    if n2 is not n:
+                        U += self.edge_length_U(sep_mag(self.g, n, n2) ** 2)
+
                 d['U'] = U
                 d['Uf'] = False
             return d['U']
@@ -35,8 +51,8 @@ class MetroGraph(object):
         U = 0.0
         for n,d in self.g.nodes(data=True):
             U += node_energy(n, d)
-        for u,v,d in self.g.edges(data=True):
-            U += edge_energy(u, v, d)
+        # for u,v,d in self.g.edges(data=True):
+        #     U += edge_energy(u, v, d)
         return U
 
     def store_state(self):
@@ -45,18 +61,19 @@ class MetroGraph(object):
     def revert_state(self):
         self.g.node[self.n_pert]['r'] = self.r_old.copy()
 
-    def perturb(self):
-        self.g.node[self.n_pert]['r'] += np.random.uniform(-0.01, 0.01, size=2)
+    def perturb(self, dr_max):
+        self.g.node[self.n_pert]['r'] += np.random.uniform(-dr_max, dr_max, size=2)
         self.g.node[self.n_pert]['Uf'] = True
         for u,v,d in self.g.edges(self.n_pert, data=True):
             d['Uf'] = True
 
-    def iterate(self, beta):
+    def iterate(self, beta, dr_max):
         self.n_pert = self.g.nodes()[np.random.randint(len(self.g.nodes()))]
         U_0 = self.get_U()
         self.store_state()
-        self.perturb()
-        if np.minimum(1.0, np.exp(-beta * (U_0 - self.get_U()))) > np.random.uniform():
+        self.perturb(dr_max)
+        U_new = self.get_U()
+        if np.minimum(1.0, np.exp(-beta * (U_0 - U_new))) > np.random.uniform():
             self.revert_state()
 
 def jsonned(g):
@@ -84,8 +101,8 @@ def plot(g, fname=None):
             c = mpl.patches.Circle(g.node[n]['r'], radius=0.0075, fc='blue', lw=0, zorder=10)
         elif len(g.neighbors(n)) == 1: # terminus
             c = mpl.patches.Circle(g.node[n]['r'], radius=0.015, fc='green', lw=0, zorder=10)
-        else:
-            raise Exception
+        else: # orphan
+            c = mpl.patches.Circle(g.node[n]['r'], radius=0.015, fc='red', lw=0, zorder=10)
         ax.add_patch(c)
 
     ps = paths(g)
@@ -140,47 +157,26 @@ def normalise_rs(g):
     for n, r in zip(g, rs):
         g.node[n]['r'] = r
 
-# def grow(g):
-#     p_length = 10
-
-#     i_p = 0
-#     while orphans(g):
-#         p = []
-#         i_since_change = 0
-#         while i_since_change < 1000:
-#             for n in n_list(g, p):
-#                 if n_valid(g, p, n):
-#                     p.append(n)
-#                     i_since_change = 0
-#                     break
-#             if len(p) > p_length:
-#                 break
-#             i_since_change += 1
-#         g.add_path(p, path=i_p, Uf=True)
-#         i_p += 1
-
 def grow(g):
-    p_length = 6
+    p_length_mean = 6
+    p_rlength_max = 1.0
 
     i_p = 0
     while orphans(g):
-        print(orphans(g))
-        n_subs = []
-        while len(n_subs) < p_length:
-            n = g.nodes()[np.random.randint(0, g.order())]
-            if n not in n_subs: n_subs.append(n)
-
-        p = [n_subs.pop(np.random.randint(0, len(n_subs)))]
-        while len(p) < p_length:
-            i_next = np.argsort([sep_mag(g, p[-1], n) for n in n_subs])[0]
-            p.append(n_subs.pop(i_next))
-
-        g.add_path(p, path=i_p, Uf=True)
+        p_length = np.random.randint(p_length_mean - 1, p_length_mean + 2)
+        p_base = np.random.permutation(g.nodes())[:p_length]
+        p_rlength_min = np.inf
+        for p in itertools.permutations(p_base):
+            p_rlength = np.sum([sep_mag(g, p[i], p[i + 1]) for i in range(p_length - 1)])
+            if p_rlength < p_rlength_min: 
+                p_rlength_min = p_rlength
+                p_min = list(p)
+        g.add_path(p_min, path=i_p, Uf=True)
         i_p += 1
 
-def simplify(g, i=10000):
+def simplify(g, beta=1.0, dr_max=0.01, i=10000):
     mg = MetroGraph(g)
-    # for _ in range(i): mg.iterate(0.3)
+    for _ in range(i): mg.iterate(beta, dr_max)
 
 def places_graph(places):
     g = nx.MultiGraph()
@@ -200,13 +196,13 @@ def main():
     g = random_graph()
     normalise_rs(g)
     grow(g)
-    mg = MetroGraph(g)
-
-    for _ in range(10000): 
-        if not _ % 2000: 
-            plot(mg.g, _)
-            print(_)
-        mg.iterate(0.3)
+    # mg = MetroGraph(g)
+    plot(g)
+    # for _ in range(10000): 
+    #     if not _ % 2000: 
+    #         plot(mg.g, _)
+    #         print(_)
+    #     mg.iterate(0.3)
     # nx.draw(g)
     # pp.show()
 

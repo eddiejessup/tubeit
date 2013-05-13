@@ -28,9 +28,10 @@ def search(request):
             # g = skel.places_graph(places)
 
             g = skel.random_graph(g_nodes=50)
+
             skel.normalise_rs(g)
             skel.grow(g)
-            skel.simplify(g, 10000)
+            skel.simplify(g, 1.0, 0.02, 20000)
             g_json = skel.jsonned(g)
 
             request.session['first_render'] = 1
@@ -46,7 +47,6 @@ def search(request):
     }))
 
 def draw(request):
-
     g_json = request.session.get('graph_json')
     first_render = request.session.get('first_render')
     request.session['first_render'] = 0
