@@ -3,6 +3,9 @@ svg_height = 0.7 * window.innerHeight
 
 offset = 0.01
 
+# colours = ['teal', 'silver', 'sienna', 'plum', 'orange', 'indigo', 'gold', 'cyan', 'red', 'aqua', 'black']
+colours = ["AliceBlue", "AntiqueWhite", "Aqua", "Aquamarine", "Azure", "Beige", "Bisque", "Black", "BlanchedAlmond", "Blue", "BlueViolet", "Brown", "BurlyWood", "CadetBlue", "Chartreuse", "Chocolate", "Coral", "CornflowerBlue", "Cornsilk", "Crimson", "Cyan", "DarkBlue", "DarkCyan", "DarkGoldenRod", "DarkGray", "DarkGrey", "DarkGreen", "DarkKhaki", "DarkMagenta", "DarkOliveGreen", "Darkorange", "DarkOrchid", "DarkRed", "DarkSalmon", "DarkSeaGreen", "DarkSlateBlue", "DarkSlateGray", "DarkSlateGrey", "DarkTurquoise", "DarkViolet", "DeepPink", "DeepSkyBlue", "DimGray", "DimGrey", "DodgerBlue", "FireBrick", "FloralWhite", "ForestGreen", "Fuchsia", "Gainsboro", "GhostWhite", "Gold", "GoldenRod", "Gray", "Grey", "Green", "GreenYellow", "HoneyDew", "HotPink", "IndianRed", "Indigo", "Ivory", "Khaki", "Lavender", "LavenderBlush", "LawnGreen", "LemonChiffon", "LightBlue", "LightCoral", "LightCyan", "LightGoldenRodYellow", "LightGray", "LightGrey", "LightGreen", "LightPink", "LightSalmon", "LightSeaGreen", "LightSkyBlue", "LightSlateGray", "LightSlateGrey", "LightSteelBlue", "LightYellow", "Lime", "LimeGreen", "Linen", "Magenta", "Maroon", "MediumAquaMarine", "MediumBlue", "MediumOrchid", "MediumPurple", "MediumSeaGreen", "MediumSlateBlue", "MediumSpringGreen", "MediumTurquoise", "MediumVioletRed", "MidnightBlue", "MintCream", "MistyRose", "Moccasin", "NavajoWhite", "Navy", "OldLace", "Olive", "OliveDrab", "Orange", "OrangeRed", "Orchid", "PaleGoldenRod", "PaleGreen", "PaleTurquoise", "PaleVioletRed", "PapayaWhip", "PeachPuff", "Peru", "Pink", "Plum", "PowderBlue", "Purple", "Red", "RosyBrown", "RoyalBlue", "SaddleBrown", "Salmon", "SandyBrown", "SeaGreen", "SeaShell", "Sienna", "Silver", "SkyBlue", "SlateBlue", "SlateGray", "SlateGrey", "Snow", "SpringGreen", "SteelBlue", "Tan", "Teal", "Thistle", "Tomato", "Turquoise", "Violet", "Wheat", "White", "WhiteSmoke", "Yellow", "YellowGreen"];
+
 _drawCircles = (nodes, SVG) ->
 
 	circles = SVG.selectAll("circle")
@@ -31,7 +34,7 @@ _drawCircles = (nodes, SVG) ->
 	    .attr("y", (d) -> ((d.y + offset) * svg_height))
 		.text((d) -> (d.label))
 
-_drawLine = (nodes, path, SVG, animate) ->
+_drawLine = (nodes, path, colour, SVG, animate) ->
 
 	lineFunction = d3.svg.line()
 	                  .x((d) -> nodes[d].x * svg_width)
@@ -40,7 +43,7 @@ _drawLine = (nodes, path, SVG, animate) ->
 
 	lineGraph = SVG.append("path")
 		.attr("d", lineFunction(path.nodes))
-		.attr("stroke")
+		.attr("stroke", colour)
 		.attr("stroke-width", 5)
 		.attr("fill", "none")
 	    .attr("fill", "none")
@@ -84,4 +87,4 @@ main = (data, animate) ->
 		node.y += 0.5
 
 	_drawCircles(data.nodes, svg)
-	_drawLine(data.nodes, path, svg, animate) for path, i in data.paths
+	_drawLine(data.nodes, path, colours[i], svg, animate) for path, i in data.paths

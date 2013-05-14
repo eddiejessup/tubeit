@@ -74,6 +74,7 @@ def grow(g):
 
     i_p = 0
     while nxu.orphans(g):
+        print(nxu.orphans(g))
         p_length = np.random.randint(p_length_mean - 1, p_length_mean + 2)
         p_base = np.random.permutation(g.nodes())[:p_length]
         p_rlength_min = np.inf

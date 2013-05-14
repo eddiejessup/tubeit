@@ -34,11 +34,14 @@ class MetroGraph(object):
                 d['Uf'] = False
             return d['U']
 
-        U = 0.0
+        nodes_U = 0.0
         for n,d in self.g.nodes(data=True):
-            U += node_energy(n, d)
+            nodes_U += node_energy(n, d)
+        edges_U = 0.0
         for u,v,d in self.g.edges(data=True):
-            U += edge_energy(u, v, d)
+            edges_U += edge_energy(u, v, d)
+        U = nodes_U + edges_U
+        print(nodes_U, edges_U, U)
         return U
 
     def store_state(self):

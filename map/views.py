@@ -32,7 +32,7 @@ def search(request):
             import numpy as np
             skel.normalise_rs(g)
             skel.grow(g)
-            mg.simplify(g, 2.0, 0.01, 5000)
+            mg.simplify(g, 1.0, 0.02, 10000)
             g_json = skel.jsonned(g)
 
             request.session['first_render'] = 1
