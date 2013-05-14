@@ -4,11 +4,12 @@ from django import forms
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
-from map import place_search
-from map import skel
 from django.shortcuts import render_to_response
 from django.shortcuts import redirect
 from django.template.context import RequestContext
+from map import place_search
+from map import skel
+from map import metrograph as mg
 
 class SearchForm(forms.Form):
     query = forms.CharField(max_length=100, label='')
@@ -24,13 +25,14 @@ def search(request):
         form = SearchForm(request.POST)
         if form.is_valid():
 
-            places = place_search.text_to_nearest(form.cleaned_data['query'])
-            g = skel.places_graph(places)
+            # places = place_search.text_to_nearest(form.cleaned_data['query'])
+            # g = skel.places_graph(places)
 
             g = skel.random_graph(g_nodes=50)
+            import numpy as np
             skel.normalise_rs(g)
             skel.grow(g)
-            skel.simplify(g, 1.0, 0.02, 20000)
+            mg.simplify(g, 2.0, 0.01, 5000)
             g_json = skel.jsonned(g)
 
             request.session['first_render'] = 1

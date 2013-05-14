@@ -3,11 +3,8 @@ svg_height = 0.7 * window.innerHeight
 
 offset = 0.01
 
-colours = ['teal', 'silver', 'sienna', 'plum', 'orange', 'indigo', 'gold', 'cyan', 'red', 'aqua']
-
 _drawCircles = (nodes, SVG) ->
 
-	console.log(nodes)
 	circles = SVG.selectAll("circle")
 	    .data(nodes)
 	    .enter()
@@ -34,16 +31,16 @@ _drawCircles = (nodes, SVG) ->
 	    .attr("y", (d) -> ((d.y + offset) * svg_height))
 		.text((d) -> (d.label))
 
-_drawLine = (nodes, path, colour, SVG, animate) ->
+_drawLine = (nodes, path, SVG, animate) ->
 
 	lineFunction = d3.svg.line()
 	                  .x((d) -> nodes[d].x * svg_width)
 	                  .y((d) -> nodes[d].y * svg_height)
-	                  .interpolate("cardinal")
+	                  .interpolate("linear")
 
 	lineGraph = SVG.append("path")
 		.attr("d", lineFunction(path.nodes))
-		.attr("stroke", colour)
+		.attr("stroke")
 		.attr("stroke-width", 5)
 		.attr("fill", "none")
 	    .attr("fill", "none")
@@ -70,7 +67,6 @@ _drawLine = (nodes, path, colour, SVG, animate) ->
 		    .ease("linear")
 		    .attr("stroke-dashoffset", 0)
 
-
 main = (data, animate) ->
 
 	svg = d3.select(".span12")
@@ -78,5 +74,14 @@ main = (data, animate) ->
 			.attr("width", svg_width)
 			.attr("height", svg_height)
 
+	for node, i in data.nodes
+		node.x -= 0.5
+		node.x *= 0.95
+		node.x += 0.5
+
+		node.y -= 0.5
+		node.y *= 0.95
+		node.y += 0.5
+
 	_drawCircles(data.nodes, svg)
-	_drawLine(data.nodes, path, colours[i], svg, animate) for path, i in data.paths
+	_drawLine(data.nodes, path, svg, animate) for path, i in data.paths
