@@ -4,11 +4,11 @@ from django import forms
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
-from map import place_search
-from map import skel
 from django.shortcuts import render_to_response
 from django.shortcuts import redirect
 from django.template.context import RequestContext
+from map import place_search
+from map import skel
 
 class SearchForm(forms.Form):
     query = forms.CharField(max_length=100, label='')
@@ -25,16 +25,12 @@ def search(request):
         if form.is_valid():
 
             places = place_search.text_to_nearest(form.cleaned_data['query'])
-            g = skel.places_graph(places)
-
-            g = skel.random_graph(g_nodes=50)
-            skel.normalise_rs(g)
-            skel.grow(g)
-            skel.simplify(g, 1.0, 0.02, 20000)
-            g_json = skel.jsonned(g)
+            nodes = skel.places_nodes(places)
+            # nodes = skel.random_nodes(50)
+            mg = skel.nodes_to_graph(nodes, t=2000)
 
             request.session['first_render'] = 1
-            request.session['graph_json'] = g_json
+            request.session['graph_json'] = mg.json()
 
             return redirect('draw')
     else:
