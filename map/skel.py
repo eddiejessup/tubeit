@@ -357,7 +357,7 @@ def main():
     for i in range(100000):
         beta = i/100.0
         mg.iterate(beta)
-        if not i % 500:
+        if not i % 100:
             print(mg.U())
             for p in mg.ps:
                 xs, ys = [], []
