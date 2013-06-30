@@ -9,7 +9,6 @@ from django.shortcuts import redirect
 from django.template.context import RequestContext
 from map import place_search
 from map import skel
-from map import metrograph as mg
 
 class SearchForm(forms.Form):
     query = forms.CharField(max_length=100, label='')
@@ -25,18 +24,13 @@ def search(request):
         form = SearchForm(request.POST)
         if form.is_valid():
 
-            # places = place_search.text_to_nearest(form.cleaned_data['query'])
-            # g = skel.places_graph(places)
-
-            g = skel.random_graph(g_nodes=50)
-            import numpy as np
-            skel.normalise_rs(g)
-            skel.grow(g)
-            mg.simplify(g, 1.0, 0.02, 10000)
-            g_json = skel.jsonned(g)
+            places = place_search.text_to_nearest(form.cleaned_data['query'])
+            nodes = skel.places_nodes(places)
+            # nodes = skel.random_nodes(50)
+            mg = skel.nodes_to_graph(nodes, t=2000)
 
             request.session['first_render'] = 1
-            request.session['graph_json'] = g_json
+            request.session['graph_json'] = mg.json()
 
             return redirect('draw')
     else:
