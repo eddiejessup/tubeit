@@ -1,7 +1,7 @@
-# svg_width = 0.8 * window.innerWidth
-# svg_height = 0.7 * window.innerHeight
-svg_width = 400
-svg_height = 400
+svg_width = 0.8 * window.innerWidth
+svg_height = 0.7 * window.innerHeight
+# svg_width = 400
+# svg_height = 400
 
 offset = 0.01
 
