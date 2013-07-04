@@ -27,7 +27,7 @@ def search(request):
             places = place_search.text_to_nearest(form.cleaned_data['query'])
             nodes = skel.places_nodes(places)
             # nodes = skel.random_nodes(50)
-            mg = skel.nodes_to_graph(nodes, t=2000)
+            mg = skel.nodes_to_graph(nodes, t=4000)
 
             request.session['first_render'] = 1
             request.session['graph_json'] = mg.json()

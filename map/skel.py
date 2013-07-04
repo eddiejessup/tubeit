@@ -9,10 +9,11 @@ import potentials
 np.random.seed(116)
 
 class MetroGraph(object):
-    def __init__(self, nodes, paths, dr_max=0.01):
+    def __init__(self, nodes, paths, dr_max=0.02):
         self.ns = nodes
         self.ps = paths
         self.o = len(self.ns)
+        self.c = len(self.ps)
 
         # Normalise rs
         rs = get_rs(self.ns)
@@ -26,19 +27,19 @@ class MetroGraph(object):
 
         # Energy scales
         ### Internode
-        self.node_inter_U = 0.1
+        self.node_inter_U = 0.4
         ### Node degree
-        self.node_deg_U = 1.0
+        self.node_deg_U = 10.0
         ### Edge angle
-        self.edge_angle_U = 1.0
+        self.edge_angle_U = 10.0
         ### Edge physical length
-        self.edge_r_U = 1.0
+        self.edge_r_U = 10.0
         ### Edge fixed length
         self.edge_l_U = 1.0
 
         # Internode
         ## Length scale
-        self.node_inter_r = 0.06
+        self.node_inter_r = 0.08
         ## Function
         self.node_inter_U_func = potentials.LJ(self.node_inter_r, self.node_inter_U)
 
@@ -154,73 +155,66 @@ class MetroGraph(object):
             self.U_changed = False
         return self.U_cache
 
-    # def add_edge(self):
-    #     while True:
-    #         self.u = self.g.nodes()[np.random.randint(self.g.order())]
-    #         self.v = self.g.nodes()[np.random.randint(self.g.order())]
-    #         if not (self.u is self.v) and not self.v in self.g.edge[self.u]: break
-    #     self.g.add_edge(self.u, self.v, Uf=True)
-
-    # def revert_add_edge(self):
-    #     self.g.remove_edge(self.u, self.v)
-
-    # def remove_edge(self):
-    #     self.u, self.v, self.d = self.g.edges(data=True)[np.random.randint(self.g.size())]
-    #     self.g.remove_edge(self.u, self.v)
-
-    # def revert_remove_edge(self):
-    #     self.g.add_edge(self.u, self.v, **self.d)
-    #     self.d['Uf'] = True
-
-    def displace_node(self):
-        # Pick node to displace
-        i_node = np.random.randint(self.o)
-
+    def swap_edges(self, i):
+        # Get list to be jiggled
+        p = self.ps[i]
         # Store current state
-        self.u = self.ns[i_node]
-        self.r = self.u.r.copy()
-
-        # Displace
-        self.u.r += np.random.uniform(-self.dr_max, self.dr_max, size=2)
-
-    def revert_displace_node(self):
-        self.u.r = self.r.copy()
-
-    def cache_flag_update_node(self):
-        # Graph energy
+        self.p_store = p
+        self.ns_store = p.ns[:]
+        # Swap
+        # This might result in i_n2 == i_n2, not really a problem though
+        i_n1 = np.random.randint(len(p.ns))
+        i_n2 = np.random.randint(len(p.ns))
+        p.ns[i_n1], p.ns[i_n2] = p.ns[i_n2], p.ns[i_n1]
+        # Update cache
+        self.cache_flag_update_swap()
+    def revert_swap_edges(self):
+        self.p_store.ns = self.ns_store[:]
+        # Update cache
+        self.cache_flag_update_swap()        
+    def cache_flag_update_swap(self):
+        # Total energy
         self.U_changed = True
-        # Node energy
-        # self.inter_U_changed[...] = True
-        self.inter_U_changed[self.u.i, :] = True
-        self.inter_U_changed[:, self.u.i] = True
-        # Node neighbouring edges
-        # ! TODO NEEDS WORK TO WORK WITH PATHS
-        # for u, v, d in self.g.edges(self.u, data=True):
-        #     d['U_changed'] = True
+        # TODO NEEDS TO WORK WITH CACHED EDGE ENERGIES
+
+    def displace_node(self, i):
+        # Get node to be jiggled
+        n = self.ns[i]
+        # Store current state
+        self.n_store = n
+        self.r_store = n.r.copy()
+        # Displace
+        n.r += np.random.uniform(-self.dr_max, self.dr_max, size=2)
+        # Update cache
+        self.cache_flag_update_node()
+    def revert_displace_node(self):
+        self.n_store.r = self.r_store.copy()
+        # Update cache
+        self.cache_flag_update_node()
+    def cache_flag_update_node(self):
+        # Total energy
+        self.U_changed = True
+        # Node energies
+        self.inter_U_changed[self.n_store.i, :] = True
+        self.inter_U_changed[:, self.n_store.i] = True
+        # TODO NEEDS TO WORK WITH CACHED EDGE ENERGIES
 
     def iterate(self, beta):
         U_0 = self.U()
 
-        i = np.random.randint(self.o)
+        i = np.random.randint(self.o + self.c)
         if i < self.o:
-            self.displace_node()
-            cache_flag_update = self.cache_flag_update_node
+            self.displace_node(i)
             revert = self.revert_displace_node
-        # elif i == self.g.order():
-        #     self.add_edge()
-        #     revert = self.revert_add_edge
-        # elif i == self.g.order() + 1:
-        #     if self.g.size() == 0: return
-        #     self.remove_edge()
-        #     revert = self.revert_remove_edge
+        elif self.o <= i < self.o + self.c:
+            self.swap_edges(i - self.o)
+            revert = self.revert_swap_edges
         else:
             raise Exception
 
-        cache_flag_update()
         U_new = self.U()
         if np.exp(-beta * (U_new - U_0)) < np.random.uniform():
             revert()
-            cache_flag_update()
 
     def json(self):
         ns = []
@@ -233,7 +227,8 @@ class MetroGraph(object):
 
 class Path(object):
     def __init__(self, nodes, label=''):
-        self.ns = nodes
+        # Make sure the node list is mutable
+        self.ns = list(nodes)
         self.label = label
         self.U_changed = True
 
@@ -241,35 +236,6 @@ class Node(object):
     def __init__(self, r, label=''):
         self.r = r
         self.label = label
-
-# def plot(g, fname=None):
-#     fig = pp.figure()
-#     ax = fig.gca()
-#     ax.set_aspect('equal')
-#     ax.set_xlim([-0.1, 1.1])
-#     ax.set_ylim([-0.1, 1.1])
-#     ax.set_xticks([])
-#     ax.set_yticks([])
-
-#     for n in g:
-#         if len(g.neighbors(n)) > 2: # junction
-#             c = mpl.patches.Circle(g.node[n]['r'], radius=0.005, fc='white', ec='black', lw=2, zorder=10)
-#         elif len(g.neighbors(n)) == 2: # stop
-#             c = mpl.patches.Circle(g.node[n]['r'], radius=0.0075, fc='blue', lw=0, zorder=10)
-#         elif len(g.neighbors(n)) == 1: # terminus
-#             c = mpl.patches.Circle(g.node[n]['r'], radius=0.015, fc='green', lw=0, zorder=10)
-#         else: # orphan
-#             c = mpl.patches.Circle(g.node[n]['r'], radius=0.015, fc='red', lw=0, zorder=10)
-#         ax.add_patch(c)
-
-#     for u,v,d in g.edges(data=True):
-#         x, y = np.array([g.node[u]['r'], g.node[v]['r']]).T
-#         l = mpl.lines.Line2D(x, y, color=mpl.cm.jet(c), lw=3)
-#         ax.add_line(l)
-
-#     if fname is None: pp.show()
-#     else: fig.savefig('%s.png' % fname)
-
 
 # Utils
 
@@ -316,12 +282,19 @@ def random_nodes(n=50):
         ns.append(Node(label='', r=np.random.uniform(-0.5, 0.5, size=2)))
     return ns
 
-def initialise_paths(ns, p_length=5):
+def initialise_paths(ns, ps_length=6, p_length=6):
     ps = []
     i = 0
-    while isolateds(ns, ps):
-        ns_base = np.random.permutation(list(isolateds(ns, ps)))[:p_length]
+    # Make sure to include every node
+    while isolateds(ns, ps) or len(ps) < ps_length:
+        # Get a random selection of isolated nodes, of max length p_length
+        ns_base = list(np.random.permutation(list(isolateds(ns, ps)))[:p_length])
+        # If there aren't enough isolated nodes, go for random ones
+        if len(ns_base) < p_length:
+            ns_base += list(np.random.permutation(ns)[:p_length - len(ns_base)])
+        # Minimise path length travelling-salesman-wise
         ns_min = minimise_path(ns_base, length)
+
         ps.append(Path(nodes=ns_min, label=i))
         i += 1
     return ps
@@ -341,7 +314,7 @@ def nodes_to_graph(ns, t=10000):
     ps = initialise_paths(ns)
     mg = MetroGraph(ns, ps)
     for i in range(t):
-        mg.iterate(float(i) / t)
+        mg.iterate(float(i + 1.0) / t)
     return mg
 
 def main():
@@ -355,7 +328,7 @@ def main():
     pp.show()
 
     for i in range(100000):
-        beta = i/100.0
+        beta = (i+1.0)/100.0
         mg.iterate(beta)
         if not i % 100:
             print(mg.U())

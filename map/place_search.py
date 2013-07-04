@@ -120,7 +120,7 @@ def text_to_nearest(query, rad_0=100.0):
     rad = rad_0
     for _ in range(10):
         rn = sn.search(lat, long, rad)
-        if len(rn['results']) > 18: break
+        if len(rn['results']) > 40: break
         rad *= 2
     return rn['results']
 
