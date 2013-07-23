@@ -212,8 +212,8 @@ class MetroGraph(object):
         else:
             raise Exception
 
-        U_new = self.U()
-        if np.exp(-beta * (U_new - U_0)) < np.random.uniform():
+        dU = self.U() - U_0
+        if dU > 0.0 and np.exp(-beta * dU) < np.random.uniform():
             revert()
 
     def json(self):
@@ -310,40 +310,59 @@ def minimise_path(ns_base, length_func):
             l_min = l
     return ns_min
 
-def nodes_to_graph(ns, t=10000):
-    ps = initialise_paths(ns)
-    mg = MetroGraph(ns, ps)
-    for i in range(t):
-        mg.iterate(float(i + 1.0) / t)
-    return mg
+class MetroGraphRunner(object):
 
-def main():
-    nodes = random_nodes()
-    paths = initialise_paths(nodes)
-    mg = MetroGraph(nodes, paths)
+    def __init__(self, ns, t=1000):
+        self.t = t
+        self.i = 0
 
-    fig = pp.figure()
-    ax = fig.gca()
-    pp.ion()
-    pp.show()
+        ps = initialise_paths(ns)
+        self.mg = MetroGraph(ns, ps)
 
-    for i in range(100000):
-        beta = (i+1.0)/100.0
-        mg.iterate(beta)
-        if not i % 100:
-            print(mg.U())
-            for p in mg.ps:
+    def iterate(self):
+        self.mg.iterate((self.i + 1.0) / self.t)
+        self.i += 1
+
+    def iterate_to_end(self):
+        while self.i < self.t: self.iterate()
+
+class MetroGraphPlotRunner(MetroGraphRunner):
+    def __init__(self, ns, t=10000, every=100):
+        MetroGraphRunner.__init__(self, ns, t)
+
+        self.every = every
+        
+        self.fig = pp.figure()
+        self.ax = self.fig.gca()
+        pp.ion()
+        pp.show()
+
+    def iterate(self):
+        if not self.i % self.every:
+
+            print(self.mg.U())
+
+            for p in self.mg.ps:
                 xs, ys = [], []
                 for n in p.ns:
                     xs.append(n.r[0])
                     ys.append(n.r[1])
-                line = mpl.lines.Line2D(xs, ys, c=mpl.cm.autumn((float(p.label)/mg.ps[-1].label)*256.0))
-                ax.add_line(line)
-            ax.scatter(*get_rs(mg.ns).T)
-            ax.set_xlim([-0.1, 1.1])
-            ax.set_ylim([-0.1, 1.1])
+                line = mpl.lines.Line2D(xs, ys, c=mpl.cm.autumn((float(p.label)/self.mg.ps[-1].label)*256.0))
+                self.ax.add_line(line)
+            self.ax.scatter(*get_rs(self.mg.ns).T)
+            self.ax.set_xlim([-0.1, 1.1])
+            self.ax.set_ylim([-0.1, 1.1])
             pp.draw()
             pp.cla()
 
+        MetroGraphRunner.iterate(self)
+
+def main():
+    ns = random_nodes()
+    mgr = MetroGraphRunner(ns)
+    mgr.iterate_to_end()
+
 if __name__ == '__main__':
-    main()
+    # main()
+    import cProfile as cp
+    cp.run('main()')
