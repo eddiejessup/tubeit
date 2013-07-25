@@ -2,6 +2,7 @@ from __future__ import print_function
 import json
 import itertools
 import numpy as np
+import scipy.spatial
 import matplotlib as mpl
 import matplotlib.pyplot as pp
 import potentials
@@ -31,7 +32,7 @@ class MetroGraph(object):
         ### Node degree
         self.node_deg_U = 10.0
         ### Edge angle
-        self.edge_angle_U = 10.0
+        self.edge_angle_U = 1.0
         ### Edge physical length
         self.edge_r_U = 10.0
         ### Edge fixed length
@@ -39,7 +40,7 @@ class MetroGraph(object):
 
         # Internode
         ## Length scale
-        self.node_inter_r = 0.08
+        self.node_inter_r = 0.1
         ## Function
         self.node_inter_U_func = potentials.LJ(self.node_inter_r, self.node_inter_U)
 
@@ -54,106 +55,66 @@ class MetroGraph(object):
         self.node_deg_U_func = potentials.LJ(self.node_deg_r, self.node_deg_U)
 
         # Cache
-        self.U_changed = True
-        self.inter_U_changed = np.ones(2 * [self.o], dtype=np.bool) - np.identity(self.o, dtype=np.bool)
-        self.inter_U_cached = np.zeros(2 * [self.o], dtype=np.float)
-         # Give each node an index to make cache access easier
-        for i in range(self.o):
-            self.ns[i].i = i
+        self.inter_U_changed = True
+        self.inter_U_cached = None
 
-    def calc_pos_U(self, n):
+    def pos_U(self, n):
         U = 0.0
         for x in n.r:
             if not 0.0 <= x <= 1.0:
                 U += np.inf
         return U
-    def pos_U(self, n):
-        return self.calc_pos_U(n)
 
-    def calc_inter_U(self, n, n2):
-        if n is n2: return 0.0
-        return self.node_inter_U_func(sep_mag_sq(n, n2))
-    def inter_U(self, n, n2):
-        if self.inter_U_changed[n.i, n2.i]:
-            self.inter_U_cached[n.i, n2.i] = self.calc_inter_U(n, n2)
-            self.inter_U_changed[n.i, n2.i] = False
-        return self.inter_U_cached[n.i, n2.i]
-
-    def calc_inters_U(self, n):
-        U = 0.0
-        for n2 in self.ns:
-            U += self.inter_U(n, n2)
-        return U
-    def inters_U(self, n):
-        return self.calc_inters_U(n)
-
-    def calc_degree_U(self, n):
+    def degree_U(self, n):
         deg = degree(n, self.ps)
         if deg == 0: return self.node_deg_U_0
         elif deg == 1: return self.node_deg_U_1
         elif deg == 2: return self.node_deg_U_2
         else: return self.node_deg_U_func(deg)
-    def degree_U(self, n):
-        return self.calc_degree_U(n)
 
-    def calc_node_U(self, n):
-        U = 0.0
-        U_pos = self.pos_U(n)
-        U_inter = self.inters_U(n)
-        U_deg = self.degree_U(n) 
-        U = U_pos + U_inter + U_deg
-        return U
-    def node_U(self, n):
-        return self.calc_node_U(n)
+    def inters_U(self):
+        if self.inter_U_changed:
+            # print('changed')
+            rdists = scipy.spatial.distance.pdist(get_rs(self.ns), metric='sqeuclidean')
+            # print(self.node_inter_U_func(rdists).shape)
+            self.inter_U_cached = 2.0 * np.sum(self.node_inter_U_func(rdists))
+            self.inter_U_changed = False
+        # else:
+        #     print('noonononon')
+        return self.inter_U_cached
 
-    def calc_nodes_U(self):
+    def nodes_U(self):
         U = 0.0
         for n in self.ns:
-            U += self.node_U(n)
+            U += self.pos_U(n)
+            U += self.degree_U(n) 
+        U += self.inters_U()
         return U
-    def nodes_U(self):
-        return self.calc_nodes_U()
 
-    def calc_edge_U(self, r):
+    def edge_U(self, r):
         # Angle
         theta = np.arctan2(r[1], r[0])
         U_angle = self.edge_angle_U * (1.0 - np.cos(4.0 * theta) ** 2)
         # Physical length
-        U_r = self.edge_r_U * np.sqrt(np.sum(np.square(r)))
+        # U_r = self.edge_r_U * np.sqrt(np.sum(np.square(r)))
         # Fixed length
         U_l = self.edge_l_U
-        U = U_angle + U_r + U_l
+        U = U_angle + U_l
         return U
-    def edge_U(self, r):
-        return self.calc_edge_U(r)
 
-    def calc_path_U(self, p):
-        U = 0.0
-        for i in range(len(p.ns) - 1):
-            U += self.edge_U(sep(p.ns[i], p.ns[i + 1]))
-        return U
-    def path_U(self, p):
-        return self.calc_path_U(p)
-
-    def calc_paths_U(self):
+    def paths_U(self):
         U = 0.0
         for p in self.ps:
-            U += self.path_U(p)
+            for i in range(len(p.ns) - 1):
+                U += self.edge_U(sep(p.ns[i], p.ns[i + 1]))
         return U
-    def paths_U(self):
-        return self.calc_paths_U()
 
-    def calc_U(self):
+    def U(self):
         U = 0.0
         U_nodes = self.nodes_U()
         U_paths = self.paths_U()
         U = U_nodes + U_paths
         return U
-    def U(self):
-        if self.U_changed:
-            self.U_cache = self.calc_U()
-            self.U_changed = False
-        return self.U_cache
 
     def swap_edges(self, i):
         # Get list to be jiggled
@@ -166,16 +127,9 @@ class MetroGraph(object):
         i_n1 = np.random.randint(len(p.ns))
         i_n2 = np.random.randint(len(p.ns))
         p.ns[i_n1], p.ns[i_n2] = p.ns[i_n2], p.ns[i_n1]
-        # Update cache
-        self.cache_flag_update_swap()
+
     def revert_swap_edges(self):
         self.p_store.ns = self.ns_store[:]
-        # Update cache
-        self.cache_flag_update_swap()        
-    def cache_flag_update_swap(self):
-        # Total energy
-        self.U_changed = True
-        # TODO NEEDS TO WORK WITH CACHED EDGE ENERGIES
 
     def displace_node(self, i):
         # Get node to be jiggled
@@ -186,23 +140,16 @@ class MetroGraph(object):
         # Displace
         n.r += np.random.uniform(-self.dr_max, self.dr_max, size=2)
         # Update cache
-        self.cache_flag_update_node()
+        self.inter_U_changed= True
     def revert_displace_node(self):
         self.n_store.r = self.r_store.copy()
         # Update cache
-        self.cache_flag_update_node()
-    def cache_flag_update_node(self):
-        # Total energy
-        self.U_changed = True
-        # Node energies
-        self.inter_U_changed[self.n_store.i, :] = True
-        self.inter_U_changed[:, self.n_store.i] = True
-        # TODO NEEDS TO WORK WITH CACHED EDGE ENERGIES
+        self.inter_U_changed= True
 
     def iterate(self, beta):
         U_0 = self.U()
 
-        i = np.random.randint(self.o + self.c)
+        i = np.random.randint(self.o)
         if i < self.o:
             self.displace_node(i)
             revert = self.revert_displace_node
@@ -230,12 +177,12 @@ class Path(object):
         # Make sure the node list is mutable
         self.ns = list(nodes)
         self.label = label
-        self.U_changed = True
 
 class Node(object):
-    def __init__(self, r, label=''):
+    def __init__(self, r, i, label=''):
         self.r = r
         self.label = label
+        self.i = i
 
 # Utils
 
@@ -273,13 +220,13 @@ def places_nodes(places):
     for i in range(len(places)):
         place = places[i]
         loc = place['geometry']['location']
-        ns.append(Node(label=place['name'], r=np.array([loc['lat'], loc['lng']])))
+        ns.append(Node(label=place['name'], r=np.array([loc['lat'], loc['lng']]), i=i))
     return ns
 
 def random_nodes(n=50):
     ns = []
     for i in range(n):
-        ns.append(Node(label='', r=np.random.uniform(-0.5, 0.5, size=2)))
+        ns.append(Node(label='', r=np.random.uniform(-0.5, 0.5, size=2), i=i))
     return ns
 
 def initialise_paths(ns, ps_length=6, p_length=6):
@@ -312,24 +259,24 @@ def minimise_path(ns_base, length_func):
 
 class MetroGraphRunner(object):
 
-    def __init__(self, ns, t=1000):
+    def __init__(self, ns, t=100, b=100.0):
         self.t = t
         self.i = 0
+        self.b = b
 
         ps = initialise_paths(ns)
         self.mg = MetroGraph(ns, ps)
 
     def iterate(self):
-        self.mg.iterate((self.i + 1.0) / self.t)
+        self.mg.iterate(self.b * (self.i + 1.0) / self.t)
         self.i += 1
 
     def iterate_to_end(self):
         while self.i < self.t: self.iterate()
 
 class MetroGraphPlotRunner(MetroGraphRunner):
-    def __init__(self, ns, t=10000, every=100):
-        MetroGraphRunner.__init__(self, ns, t)
-
+    def __init__(self, ns, every=400, **kwargs):
+        MetroGraphRunner.__init__(self, ns, **kwargs)
         self.every = every
         
         self.fig = pp.figure()
@@ -347,7 +294,7 @@ class MetroGraphPlotRunner(MetroGraphRunner):
                 for n in p.ns:
                     xs.append(n.r[0])
                     ys.append(n.r[1])
-                line = mpl.lines.Line2D(xs, ys, c=mpl.cm.autumn((float(p.label)/self.mg.ps[-1].label)*256.0))
+                line = mpl.lines.Line2D(xs, ys, c=mpl.cm.jet(float(p.label)/self.mg.ps[-1].label))
                 self.ax.add_line(line)
             self.ax.scatter(*get_rs(self.mg.ns).T)
             self.ax.set_xlim([-0.1, 1.1])
@@ -359,10 +306,8 @@ class MetroGraphPlotRunner(MetroGraphRunner):
 
 def main():
     ns = random_nodes()
-    mgr = MetroGraphRunner(ns)
+    mgr = MetroGraphPlotRunner(ns)
     mgr.iterate_to_end()
 
 if __name__ == '__main__':
-    # main()
-    import cProfile as cp
-    cp.run('main()')
+    main()
