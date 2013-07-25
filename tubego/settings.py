@@ -15,7 +15,7 @@ if socket.gethostname() in ['elap', 'eserv']:
     PROJECT_DIR = '/home/ejm/Tubeit/'
 # elliot bought a mac!
 elif socket.gethostname() == 'emac.local':
-    PROJECT_DIR = '/Users/ejm/Documents/Tubeit'
+    PROJECT_DIR = '/Users/ejm/Desktop/Tubeit'
 elif socket.gethostname() == 'fcullens-MacBook.local':
     PROJECT_DIR = '/Users/fcullen/tubeit/'
 elif socket.gethostname() == 'Sams-MacBook.local':
