@@ -72,9 +72,9 @@ class NearbySearcher(PlacesSearcher):
         r = r['results']
         print(r)
 
-    def search(self, lat, long, rad):
+    def search(self, lat, longit, rad):
         args = {
-            'location': '%s,%s' % (lat, long),
+            'location': '%s,%s' % (lat, longit),
             'radius': rad,
             'types': 'bar',
         }
@@ -102,24 +102,24 @@ def text_to_loc(query):
     st = TextSearcher()
     rt = st.search(query)
     try:
-        lat, long = location(rt['results'][0])
+        lat, longit = location(rt['results'][0])
     except IndexError:
         print(rt)
         raise Exception
-    return lat, long
+    return lat, longit
 
 def text_to_nearby(query, rad=100.0):
-    lat, long = text_to_loc(query)
+    lat, longit = text_to_loc(query)
     sn = NearbySearcher()
-    rn = sn.search(lat, long, rad)
+    rn = sn.search(lat, longit, rad)
     return rn['results']
 
 def text_to_nearest(query, rad_0=100.0):
-    lat, long = text_to_loc(query)
+    lat, longit = text_to_loc(query)
     sn = NearbySearcher()
     rad = rad_0
     for _ in range(10):
-        rn = sn.search(lat, long, rad)
+        rn = sn.search(lat, longit, rad)
         if len(rn['results']) > 40: break
         rad *= 2
     return rn['results']
@@ -128,7 +128,7 @@ def plot(query, rad=100.0):
     import matplotlib.pyplot as pp
     rn = text_to_nearby(query, rad)
     for place in rn:
-        lat, long = location(place)
-        pp.scatter(lat, long)
-        pp.text(lat, long, place['name'])
+        lat, longit = location(place)
+        pp.scatter(lat, longit)
+        pp.text(lat, longit, place['name'])
     pp.show()
