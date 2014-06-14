@@ -21,7 +21,7 @@ elif socket.gethostname() == 'fcullens-MacBook.local':
 elif socket.gethostname() == 'Sams-MacBook.local':
     PROJECT_DIR = '/Users/Sam/Code/tubeit/'
 else:
-    PROJECT_DIR = raw_input('I do not know you, enter the path to Tubego: ')
+    PROJECT_DIR = input('I do not know you, enter the path to Tubego: ')
 if PROJECT_DIR[-1] != '/': PROJECT_DIR += '/'
 
 DATABASES = {

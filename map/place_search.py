@@ -1,18 +1,18 @@
-from __future__ import print_function
-import urllib
+
+import urllib.request, urllib.parse, urllib.error
 import json
-import httplib
+import http.client
 
 class Searcher(object):
     def __init__(self):
         self.get_path_base()
-        self.conn = httplib.HTTPSConnection(self.HOST)
+        self.conn = http.client.HTTPSConnection(self.HOST)
 
     def get_path_base(self):
-        self.path_base = '/%s?%s' % (self.API_PATH, urllib.urlencode(self.args_base))
+        self.path_base = '/%s?%s' % (self.API_PATH, urllib.parse.urlencode(self.args_base))
 
     def get_response(self, args):
-        request_path = '%s&%s' % (self.path_base, urllib.urlencode(args))
+        request_path = '%s&%s' % (self.path_base, urllib.parse.urlencode(args))
         self.conn.request('GET', request_path)
         response = self.conn.getresponse()
         body = response.read()

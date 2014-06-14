@@ -1,11 +1,11 @@
-from __future__ import print_function
+
 import json
 import itertools
 import numpy as np
 import scipy.spatial
 import matplotlib as mpl
 import matplotlib.pyplot as pp
-import potentials
+from . import potentials
 
 np.random.seed(116)
 

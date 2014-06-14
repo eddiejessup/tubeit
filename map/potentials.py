@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 import numpy as np
 
 def LJ(r_0, U_0):
